@@ -61,6 +61,9 @@ const Handler = struct {
         switch (message.type) {
             .binary => try self.conn.writeBin(data),
             .text => {
+                const stdout = std.io.getStdOut().writer();
+                try stdout.print("Processing message...\n", .{});
+
                 const parsed = try std.json.parseFromSlice(std.json.Value, self.context.allocator, data, .{});
                 defer parsed.deinit();
 

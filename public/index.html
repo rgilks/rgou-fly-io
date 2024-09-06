@@ -5,12 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Royal Game of Ur - WebSocket Client</title>
     <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
       #gameBoard {
         font-family: monospace;
         white-space: pre;
+        background-color: #f0f0f0;
+        padding: 10px;
+        border-radius: 5px;
       }
       .move-button {
         margin: 2px;
+        padding: 5px 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 3px;
+      }
+      .move-button:hover {
+        background-color: #45a049;
+      }
+      #gameInfo {
+        margin-top: 10px;
+        font-weight: bold;
+      }
+      #output {
+        margin-top: 20px;
+        border-top: 1px solid #ccc;
+        padding-top: 10px;
       }
     </style>
   </head>
@@ -18,11 +45,17 @@
     <h1>Royal Game of Ur</h1>
     <button onclick="newGame()">New Game</button>
     <pre id="gameBoard"></pre>
+    <div id="gameInfo"></div>
     <div id="moves"></div>
     <div id="output"></div>
 
     <script>
-      const socket = new WebSocket('wss://rgou.fly.dev/ws');
+      const wsUrl = location.hostname === 'rgou.fly.dev' 
+        ? 'wss://rgou.fly.dev/ws'
+        : 'ws://localhost:9223/ws';
+      
+      const socket = new WebSocket(wsUrl);
+
       let gameState = null;
 
       socket.onopen = function (e) {
@@ -38,7 +71,12 @@
         if (message.type === 'game_state') {
           gameState = message.state;
           updateGameBoard(message);
+          updateGameInfo(message);
           updateMoves(message.moves);
+
+          if (message.current_player === 'B') {
+            appendMessage("AI is thinking...");
+          }
         } else {
           appendMessage(`Received: ${event.data}`);
         }
@@ -67,16 +105,25 @@
         boardDiv.textContent = displayBoard(message);
       }
 
+      function updateGameInfo(message) {
+        const gameInfoDiv = document.getElementById("gameInfo");
+        gameInfoDiv.textContent = `Current player: ${message.current_player}, Dice roll: ${message.dice_roll}`;
+      }
+
       function updateMoves(moves) {
         const movesDiv = document.getElementById("moves");
         movesDiv.innerHTML = '';
-        moves.forEach((move, index) => {
-          const button = document.createElement('button');
-          button.textContent = `${index + 1}. ${getPositionName(move.from)} → ${getPositionName(move.to)}`;
-          button.onclick = () => makeMove(move.from, move.to);
-          button.className = 'move-button';
-          movesDiv.appendChild(button);
-        });
+        if (moves.length === 0) {
+          movesDiv.textContent = "No moves available. Waiting for opponent...";
+        } else {
+          moves.forEach((move, index) => {
+            const button = document.createElement('button');
+            button.textContent = `${index + 1}. ${getPositionName(move.from)} → ${getPositionName(move.to)}`;
+            button.onclick = () => makeMove(move.from, move.to);
+            button.className = 'move-button';
+            movesDiv.appendChild(button);
+          });
+        }
       }
 
       function appendMessage(message) {
@@ -132,14 +179,12 @@
         const playerBOff = Number((state >> 3n) & 7n);
         const playerACompleted = Number((state >> 6n) & 7n);
         const playerBCompleted = Number((state >> 9n) & 7n);
-        const roll = message.dice_roll;
 
         output += `   ${playerAOff} > ${playerACompleted} `;
         for (let i = 0; i < 4; i++) {
-          output += i < roll ? "1" : "0";
+          output += i < message.dice_roll ? "1" : "0";
         }
         output += ` ${playerBOff} > ${playerBCompleted}\n`;
-        output += `\nCurrent player: ${message.current_player}\n`;
 
         return output;
       }
