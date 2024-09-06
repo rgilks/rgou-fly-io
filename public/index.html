@@ -17,22 +17,18 @@
   <body>
     <h1>Royal Game of Ur</h1>
     <button onclick="newGame()">New Game</button>
-    <button onclick="requestAIMove()">AI Move</button>
     <pre id="gameBoard"></pre>
     <div id="moves"></div>
     <div id="output"></div>
 
     <script>
-      // const socket = new WebSocket(
-      //   "wss://xtvw98u0cf.execute-api.eu-west-1.amazonaws.com/production/"
-      // );
-
       const socket = new WebSocket('wss://rgou.fly.dev/ws');
       let gameState = null;
 
       socket.onopen = function (e) {
         console.log("WebSocket connection established");
         appendMessage("Connected to server");
+        newGame();
       };
 
       socket.onmessage = function (event) {
@@ -40,9 +36,9 @@
         const message = JSON.parse(event.data);
 
         if (message.type === 'game_state') {
-          gameState = message.game;
-          updateGameBoard();
-          updateMoves();
+          gameState = message.state;
+          updateGameBoard(message);
+          updateMoves(message.moves);
         } else {
           appendMessage(`Received: ${event.data}`);
         }
@@ -63,23 +59,18 @@
       }
 
       function makeMove(from, to) {
-        socket.send(JSON.stringify({ type: "make_move", game: gameState, data: { from, to } }));
+        socket.send(JSON.stringify({ type: "make_move", from: from, to: to }));
       }
 
-      function requestAIMove() {
-        socket.send(JSON.stringify({ type: "ai_move", game: gameState }));
-      }
-
-      function updateGameBoard() {
+      function updateGameBoard(message) {
         const boardDiv = document.getElementById("gameBoard");
-        boardDiv.textContent = displayBoard();
+        boardDiv.textContent = displayBoard(message);
       }
 
-      function updateMoves() {
+      function updateMoves(moves) {
         const movesDiv = document.getElementById("moves");
         movesDiv.innerHTML = '';
-        const possibleMoves = getPossibleMoves();
-        possibleMoves.forEach((move, index) => {
+        moves.forEach((move, index) => {
           const button = document.createElement('button');
           button.textContent = `${index + 1}. ${getPositionName(move.from)} → ${getPositionName(move.to)}`;
           button.onclick = () => makeMove(move.from, move.to);
@@ -93,8 +84,8 @@
         outputDiv.innerHTML += `<p>${message}</p>`;
       }
 
-      function displayBoard() {
-        const state = BigInt(gameState);
+      function displayBoard(message) {
+        const state = BigInt(message.state);
         const board = [];
         for (let i = 0; i < 24; i++) {
           board[i] = Number((state >> BigInt(16 + i * 2)) & 3n);
@@ -141,34 +132,16 @@
         const playerBOff = Number((state >> 3n) & 7n);
         const playerACompleted = Number((state >> 6n) & 7n);
         const playerBCompleted = Number((state >> 9n) & 7n);
-        const roll = Number((state >> 13n) & 7n);
+        const roll = message.dice_roll;
 
         output += `   ${playerAOff} > ${playerACompleted} `;
         for (let i = 0; i < 4; i++) {
           output += i < roll ? "1" : "0";
         }
         output += ` ${playerBOff} > ${playerBCompleted}\n`;
+        output += `\nCurrent player: ${message.current_player}\n`;
 
         return output;
-      }
-
-      function getPossibleMoves() {
-        // This is a simplified version. In a real implementation, you'd calculate this based on the game state.
-        const moves = [];
-        const state = BigInt(gameState);
-        const roll = Number((state >> 13n) & 7n);
-        const currentPlayer = Number((state >> 12n) & 1n);
-        const path = currentPlayer === 0 ? [3, 2, 1, 0, 8, 9, 10, 11, 12, 13, 14, 15, 7, 6] : [19, 18, 17, 16, 8, 9, 10, 11, 12, 13, 14, 15, 23, 22];
-
-        for (let i = 0; i < path.length; i++) {
-          const from = path[i];
-          if (i + roll < path.length) {
-            const to = path[i + roll];
-            moves.push({ from, to });
-          }
-        }
-
-        return moves;
       }
 
       function getPositionName(pos) {

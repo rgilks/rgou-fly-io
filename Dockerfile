@@ -14,9 +14,8 @@ WORKDIR /app
 
 COPY --from=builder /app/zig-out/bin/rgou_server .
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY index.html /app/public/
+COPY ./public /app/public/
 
 EXPOSE 80
 
 CMD service nginx start && ./rgou_server
-
