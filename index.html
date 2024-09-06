@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Royal Game of Ur - WebSocket Client</title>
+    <style>
+      #gameBoard {
+        font-family: monospace;
+        white-space: pre;
+      }
+      .move-button {
+        margin: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Royal Game of Ur</h1>
+    <button onclick="newGame()">New Game</button>
+    <button onclick="requestAIMove()">AI Move</button>
+    <pre id="gameBoard"></pre>
+    <div id="moves"></div>
+    <div id="output"></div>
+
+    <script>
+      // const socket = new WebSocket(
+      //   "wss://xtvw98u0cf.execute-api.eu-west-1.amazonaws.com/production/"
+      // );
+
+      const socket = new WebSocket('ws://rgou.fly.dev/ws');
+      let gameState = null;
+
+      socket.onopen = function (e) {
+        console.log("WebSocket connection established");
+        appendMessage("Connected to server");
+      };
+
+      socket.onmessage = function (event) {
+        console.log("Message received:", event.data);
+        const message = JSON.parse(event.data);
+
+        if (message.type === 'game_state') {
+          gameState = message.game;
+          updateGameBoard();
+          updateMoves();
+        } else {
+          appendMessage(`Received: ${event.data}`);
+        }
+      };
+
+      socket.onclose = function (event) {
+        console.log("WebSocket connection closed:", event);
+        appendMessage("Connection closed");
+      };
+
+      socket.onerror = function (error) {
+        console.error("WebSocket error:", error);
+        appendMessage(`Error: ${error.message}`);
+      };
+
+      function newGame() {
+        socket.send(JSON.stringify({ type: "new_game" }));
+      }
+
+      function makeMove(from, to) {
+        socket.send(JSON.stringify({ type: "make_move", game: gameState, data: { from, to } }));
+      }
+
+      function requestAIMove() {
+        socket.send(JSON.stringify({ type: "ai_move", game: gameState }));
+      }
+
+      function updateGameBoard() {
+        const boardDiv = document.getElementById("gameBoard");
+        boardDiv.textContent = displayBoard();
+      }
+
+      function updateMoves() {
+        const movesDiv = document.getElementById("moves");
+        movesDiv.innerHTML = '';
+        const possibleMoves = getPossibleMoves();
+        possibleMoves.forEach((move, index) => {
+          const button = document.createElement('button');
+          button.textContent = `${index + 1}. ${getPositionName(move.from)} → ${getPositionName(move.to)}`;
+          button.onclick = () => makeMove(move.from, move.to);
+          button.className = 'move-button';
+          movesDiv.appendChild(button);
+        });
+      }
+
+      function appendMessage(message) {
+        const outputDiv = document.getElementById("output");
+        outputDiv.innerHTML += `<p>${message}</p>`;
+      }
+
+      function displayBoard() {
+        const state = BigInt(gameState);
+        const board = [];
+        for (let i = 0; i < 24; i++) {
+          board[i] = Number((state >> BigInt(16 + i * 2)) & 3n);
+        }
+
+        const symbols = {
+          empty: "-",
+          playerA: "O",
+          playerB: "X",
+          rosette: "+",
+        };
+
+        const isRosette = (pos) => [0, 6, 11, 16, 22].includes(pos);
+        const isExcluded = (pos) => [4, 5, 20, 21].includes(pos);
+
+        let output = "\n     1 2 3 4 5 6 7 8\n";
+        output += "  ------------------ \n";
+
+        const rows = ["A", "B", "C"];
+        for (let i = 0; i < 3; i++) {
+          output += `  ${rows[i]}  `;
+          for (let j = 0; j < 8; j++) {
+            const pos = i * 8 + j;
+            if (isExcluded(pos)) {
+              output += "  ";
+              continue;
+            }
+            const cell = board[pos];
+            if (cell === 0) {
+              output += isRosette(pos) ? symbols.rosette : symbols.empty;
+            } else if (cell === 1) {
+              output += symbols.playerA;
+            } else if (cell === 2) {
+              output += symbols.playerB;
+            }
+            output += " ";
+          }
+          output += "\n";
+        }
+
+        output += "  ------------------ \n";
+
+        const playerAOff = Number(state & 7n);
+        const playerBOff = Number((state >> 3n) & 7n);
+        const playerACompleted = Number((state >> 6n) & 7n);
+        const playerBCompleted = Number((state >> 9n) & 7n);
+        const roll = Number((state >> 13n) & 7n);
+
+        output += `   ${playerAOff} > ${playerACompleted} `;
+        for (let i = 0; i < 4; i++) {
+          output += i < roll ? "1" : "0";
+        }
+        output += ` ${playerBOff} > ${playerBCompleted}\n`;
+
+        return output;
+      }
+
+      function getPossibleMoves() {
+        // This is a simplified version. In a real implementation, you'd calculate this based on the game state.
+        const moves = [];
+        const state = BigInt(gameState);
+        const roll = Number((state >> 13n) & 7n);
+        const currentPlayer = Number((state >> 12n) & 1n);
+        const path = currentPlayer === 0 ? [3, 2, 1, 0, 8, 9, 10, 11, 12, 13, 14, 15, 7, 6] : [19, 18, 17, 16, 8, 9, 10, 11, 12, 13, 14, 15, 23, 22];
+
+        for (let i = 0; i < path.length; i++) {
+          const from = path[i];
+          if (i + roll < path.length) {
+            const to = path[i + roll];
+            moves.push({ from, to });
+          }
+        }
+
+        return moves;
+      }
+
+      function getPositionName(pos) {
+        if (pos === 24) return "off";
+        const row = Math.floor(pos / 8);
+        const col = pos % 8 + 1;
+        return ['A', 'B', 'C'][row] + col;
+      }
+    </script>
+  </body>
+</html>

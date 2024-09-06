@@ -1,0 +1,12 @@
+.{
+    .name = "rgou",
+    .version = "0.0.1",
+    .minimum_zig_version = "0.13.0",
+    .dependencies = .{
+        .websocket = .{
+            .url = "https://github.com/karlseguin/websocket.zig/archive/refs/heads/zig-0.13.tar.gz",
+            .hash = "12204ee130dbefc6f0de0c2b9e48f946ae8114f5f111256724122e17575a1ee7e2fb",
+        },
+    },
+    .paths = .{ "build.zig", "build.zig.zon", "src" },
+}

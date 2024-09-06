@@ -1,0 +1,40 @@
+# Zig build artifacts
+zig-out/
+.zig-cache/
+
+# Compiled binaries
+*.o
+*.obj
+*.exe
+*.out
+
+# Temporary files
+*.tmp
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor and IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dependency directories (if used)
+vendor/
+
+# Backup files
+*~
+*.bak
+*.old
+*.orig
+
+# Lock files
+.lock/
+
+_concat.txt
+
+fly.toml

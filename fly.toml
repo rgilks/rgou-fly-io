@@ -1,0 +1,37 @@
+# fly.toml app configuration file generated for rgou on 2024-09-06T10:41:28+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'rgou'
+primary_region = 'lhr'
+
+[build]
+
+[env]
+  PORT = '9223'
+
+[http_service]
+  internal_port = 9223
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[services]]
+  protocol = 'tcp'
+  internal_port = 9223
+
+  [[services.ports]]
+    port = 80
+    handlers = ['http']
+
+  [[services.ports]]
+    port = 443
+    handlers = ['tls', 'http']
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
