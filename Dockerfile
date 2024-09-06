@@ -6,11 +6,17 @@ WORKDIR /app
 COPY . .
 RUN zig build -Doptimize=ReleaseFast
 
-FROM scratch
+FROM debian:bullseye-slim
+
+RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /app/zig-out/bin/rgou_server /app/
 
-EXPOSE 9223
+COPY --from=builder /app/zig-out/bin/rgou_server .
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY index.html /app/public/
 
-CMD ["/app/rgou_server"]
+EXPOSE 80
+
+CMD service nginx start && ./rgou_server
+
