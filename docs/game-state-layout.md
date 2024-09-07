@@ -31,7 +31,7 @@ The board state uses 2 bits per position, with the following encoding:
 The board positions are laid out in reverse order in the bit representation:
 
 ```
-23 22 xx xx 19 18 17 16 15 14 13 12 11 10  9  8  7  6 XX ET  3  2  1  0 ROL C BC  AC  BOB AOB
+23 22 xx xx 19 18 17 16 15 14 13 12 11 10  9  8  7  6 xx ET  3  2  1  0 ROL C BC  AC  BOB AOB
 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 000 0 000 000 000 000
 ```
 

@@ -58,13 +58,13 @@ const createSquares = (scene) => {
     [7, 0],
     [3, 1],
     [0, 2],
-    [7, 2]
+    [7, 2],
   ];
 
   squarePositions.forEach(([x, z], index) => {
     const square = BABYLON.MeshBuilder.CreateBox(
       `square_${index}`,
-      { width: 0.98, height: 0.5, depth:  0.98},
+      { width: 0.98, height: 0.5, depth: 0.98 },
       scene
     );
     square.index = index;

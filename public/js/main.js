@@ -4,16 +4,16 @@ import { createScene } from "./board.js";
 import {
   createPieces,
   positionPieces,
-  highlightSelectablePieces,
+  highlightValidMoves,
+  clearHighlights,
 } from "./pieces.js";
-import { animateDiceRoll } from "./utils.js";
+import { animateDiceRoll, printStateBinary } from "./utils.js";
 
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 const gameInfoDiv = document.getElementById("gameInfo");
 const diceRollDiv = document.getElementById("diceRoll");
 const rollDiceBtn = document.getElementById("rollDiceBtn");
-const endTurnBtn = document.getElementById("endTurnBtn");
 
 let scene;
 let gameState = null;
@@ -21,6 +21,7 @@ let socket;
 
 const updateGameState = (newState) => {
   gameState = newState;
+  printStateBinary(gameState.state);
   positionPieces(gameState.state, scene);
 
   let infoText = `Current player: ${gameState.current_player}`;
@@ -36,26 +37,31 @@ const updateGameState = (newState) => {
   if (gameState.game_over) {
     gameInfoDiv.textContent += " - Game Over!";
     rollDiceBtn.disabled = true;
-    endTurnBtn.disabled = true;
   } else if (gameState.current_player === "A") {
     if (gameState.dice_roll === 0) {
       rollDiceBtn.disabled = false;
-      endTurnBtn.disabled = true;
       gameInfoDiv.textContent += " - Roll the dice!";
+      clearHighlights(scene);
     } else {
       rollDiceBtn.disabled = true;
-      endTurnBtn.disabled = false;
       if (gameState.moves.length > 0) {
-        gameInfoDiv.textContent += " - Make a move or end your turn";
-        highlightSelectablePieces(scene, gameState);
+        gameInfoDiv.textContent += " - Make a move";
+        highlightValidMoves(scene, gameState);
       } else {
-        gameInfoDiv.textContent += " - No moves available, end your turn";
+        gameInfoDiv.textContent += " - No moves available, turn passes";
+        setTimeout(() => {
+          socket.send(JSON.stringify({ type: "end_turn" }));
+        }, 2000);
       }
     }
   } else {
     rollDiceBtn.disabled = true;
-    endTurnBtn.disabled = true;
     gameInfoDiv.textContent += " - AI is thinking...";
+    clearHighlights(scene);
+    // Trigger AI move
+    setTimeout(() => {
+      socket.send(JSON.stringify({ type: "ai_move" }));
+    }, 1000);
   }
 };
 
@@ -69,7 +75,7 @@ const makeMove = async (from, to) => {
 
 const main = async () => {
   scene = createScene(engine, canvas);
-  const pieces = createPieces(scene);
+  createPieces(scene);
 
   scene.onPointerDown = (evt, pickResult) => {
     if (
@@ -89,17 +95,6 @@ const main = async () => {
     ) {
       rollDiceBtn.disabled = true;
       await rollDice(socket);
-    }
-  });
-
-  endTurnBtn.addEventListener("click", async () => {
-    if (
-      gameState &&
-      gameState.current_player === "A" &&
-      gameState.dice_roll > 0
-    ) {
-      endTurnBtn.disabled = true;
-      await socket.send(JSON.stringify({ type: "end_turn" }));
     }
   });
 

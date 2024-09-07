@@ -2,6 +2,7 @@ const std = @import("std");
 const websocket = @import("websocket");
 const engine = @import("engine.zig");
 const ai = @import("ai.zig");
+const view = @import("view.zig");
 
 const Allocator = std.mem.Allocator;
 
@@ -62,7 +63,7 @@ const Handler = struct {
             .binary => try self.conn.writeBin(data),
             .text => {
                 const stdout = std.io.getStdOut().writer();
-                try stdout.print("Processing message: {s}\n", .{data});
+                try stdout.print("msg: {s}\n", .{data});
 
                 const parsed = try std.json.parseFromSlice(std.json.Value, self.context.allocator, data, .{});
                 defer parsed.deinit();
@@ -72,6 +73,9 @@ const Handler = struct {
                 if (std.mem.eql(u8, msg_type.string, "new_game")) {
                     self.game_state = engine.initGame(&self.context.prng.random());
                     try self.sendGameState();
+                    if (engine.getCurrentPlayer(self.game_state) == .B) {
+                        try self.handleAITurn();
+                    }
                 } else if (std.mem.eql(u8, msg_type.string, "roll_dice")) {
                     if (engine.getCurrentPlayer(self.game_state) == .A) {
                         const roll = engine.rollDice(&self.context.prng);
@@ -93,6 +97,8 @@ const Handler = struct {
                         try self.sendGameState();
                         try self.handleAITurn();
                     }
+                } else if (std.mem.eql(u8, msg_type.string, "ai_move")) {
+                    try self.handleAITurn();
                 }
             },
             else => unreachable,
@@ -100,9 +106,14 @@ const Handler = struct {
     }
 
     fn handleAITurn(self: *Handler) !void {
-        while (engine.getCurrentPlayer(self.game_state) == .B and !engine.isGameOver(self.game_state)) {
+        if (engine.getCurrentPlayer(self.game_state) == .B and !engine.isGameOver(self.game_state)) {
             const ai_roll = engine.rollDice(&self.context.prng);
             engine.setDiceRoll(&self.game_state, ai_roll);
+            try self.sendGameState();
+
+            // Add a small delay to simulate "thinking"
+            std.time.sleep(1 * std.time.ns_per_s);
+
             const ai_move = try self.ai_player.getBestMove(self.game_state);
             if (ai_move) |m| {
                 engine.makeMove(&self.game_state, m);
@@ -110,9 +121,6 @@ const Handler = struct {
                 engine.setCurrentPlayer(&self.game_state, .A);
             }
             try self.sendGameState();
-
-            // Add a small delay between AI actions
-            std.time.sleep(500 * std.time.ns_per_ms);
         }
     }
 
@@ -131,6 +139,10 @@ const Handler = struct {
             .moves = moves.items,
             .game_over = engine.isGameOver(self.game_state),
         }, .{}, game_state_json.writer());
+
+        try view.printBoard(self.game_state, moves.items);
+        const stdout = std.io.getStdOut().writer();
+        try engine.printStateBinary(self.game_state, stdout);
 
         try self.conn.writeText(game_state_json.items);
     }

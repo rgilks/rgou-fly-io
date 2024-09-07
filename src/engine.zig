@@ -191,10 +191,48 @@ pub fn initGame(rng: *const std.rand.Random) GameState {
     var state: GameState = 0;
     setOffBoardPieces(&state, .A, PIECES_PER_PLAYER);
     setOffBoardPieces(&state, .B, PIECES_PER_PLAYER);
-    
+
     // Randomly set the starting player
     const starting_player = if (rng.boolean()) Player.A else Player.B;
     setCurrentPlayer(&state, starting_player);
-    
+
     return state;
+}
+
+pub fn printStateBinary(state: GameState, writer: anytype) !void {
+    const labels = "23 22 xx xx 19 18 17 16 15 14 13 12 11 10  9  8  7  6 xx ET  3  2  1  0 ROL C BC  AC  BOB AOB";
+    try writer.print("{s}\n", .{labels});
+
+    var buffer: [128]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&buffer);
+    var result = std.ArrayList(u8).init(fba.allocator());
+    defer result.deinit();
+
+    // Process board state
+    var i: u6 = 23;
+    while (i >= 0) : (i -= 1) {
+        const pos = getBoardPosition(state, i);
+        try result.writer().print("{b:0>2} ", .{pos});
+        if (i == 0) break; // Break to avoid underflow
+    }
+
+    // Add ROL (Dice roll)
+    try result.writer().print("{b:0>3} ", .{getDiceRoll(state)});
+
+    // Add C (Current player)
+    try result.writer().print("{b} ", .{@intFromEnum(getCurrentPlayer(state))});
+
+    // Add BC (Player B completed pieces)
+    try result.writer().print("{b:0>3} ", .{getCompletedPieces(state, .B)});
+
+    // Add AC (Player A completed pieces)
+    try result.writer().print("{b:0>3} ", .{getCompletedPieces(state, .A)});
+
+    // Add BOB (Player B off-board pieces)
+    try result.writer().print("{b:0>3} ", .{getOffBoardPieces(state, .B)});
+
+    // Add AOB (Player A off-board pieces)
+    try result.writer().print("{b:0>3}", .{getOffBoardPieces(state, .A)});
+
+    try writer.print("{s}\n", .{result.items});
 }
