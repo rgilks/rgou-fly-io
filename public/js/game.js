@@ -7,6 +7,7 @@ export const initGame = async (socket) => {
     await socket.send(JSON.stringify({ type: "new_game" }));
   } catch (error) {
     console.error("Error starting new game:", error);
+    throw error;
   }
 };
 
@@ -107,5 +108,6 @@ export const rollDice = async (socket) => {
     await socket.send(JSON.stringify({ type: "roll_dice" }));
   } catch (error) {
     console.error("Error rolling dice:", error);
+    throw error;
   }
 };
