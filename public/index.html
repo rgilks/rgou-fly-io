@@ -47,6 +47,17 @@
         padding: 10px;
         font-size: 16px;
       }
+      #gameExplanation {
+        position: absolute;
+        bottom: 50px;
+        left: 10px;
+        color: white;
+        font-family: Arial, sans-serif;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+        max-width: 300px;
+      }
     </style>
     <!-- Load BabylonJS scripts -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -58,6 +69,7 @@
     <canvas id="renderCanvas"></canvas>
     <div id="gameInfo"></div>
     <div id="diceRoll"></div>
+    <div id="gameExplanation"></div>
     <div id="controls">
       <button id="rollDiceBtn">Roll Dice</button>
       <button id="endTurnBtn">End Turn</button>
