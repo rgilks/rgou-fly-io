@@ -37,17 +37,18 @@ export const handlePieceClick = (pickResult, gameState, scene, makeMove) => {
 
 const highlightValidMoves = (piece, gameState, scene, makeMove) => {
   clearHighlights(scene);
-  console.log("Highlighting valid moves for", piece.name);
-  const validMoves = gameState.moves.filter(
-    (move) => move.from === getPositionIndex(piece.position)
-  );
+  console.log("Highlighting valid moves for", getPositionIndex(piece.position));
+  // const validMoves = gameState.moves.filter(
+  //   (move) => move.from === getPositionIndex(piece.position)
+  // );
+  const validMoves = gameState.moves
 
   console.log("Valid moves:", validMoves);
-  
+
   validMoves.forEach((move) => {
     const highlight = BABYLON.MeshBuilder.CreateCylinder(
       "moveHighlight",
-      { height: 0.1, diameter: 0.8 },
+      { height: 0.2, diameter: 0.8 },
       scene
     );
     highlight.position = getPositionFromIndex(move.to);

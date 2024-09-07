@@ -4,15 +4,15 @@ export const createScene = (engine, canvas) => {
   const camera = new BABYLON.ArcRotateCamera(
     "camera",
     -Math.PI / 2,
-    Math.PI / 2.5,
-    15,
+    Math.PI / 8,
+    10,
     new BABYLON.Vector3(0, 0, 0),
     scene
   );
   camera.attachControl(canvas, true);
   const light = new BABYLON.HemisphericLight(
     "light",
-    new BABYLON.Vector3(0, 1, 0),
+    new BABYLON.Vector3(0, 0.1, 0),
     scene
   );
 
@@ -27,7 +27,6 @@ const createBoard = (scene) => {
   const squareSize = 1;
 
   createSquares(scene);
-  createBorder(scene, boardWidth, boardHeight, squareSize);
 };
 
 const createSquares = (scene) => {
@@ -79,20 +78,4 @@ const createSquares = (scene) => {
     }
     square.material = squareMaterial;
   });
-};
-
-const createBorder = (scene, boardWidth, boardHeight, squareSize) => {
-  const border = BABYLON.MeshBuilder.CreateBox(
-    "border",
-    {
-      width: boardWidth * squareSize + 0.2,
-      height: 0.1,
-      depth: boardHeight * squareSize + 0.2,
-    },
-    scene
-  );
-  border.position.y = -0.15;
-  const borderMaterial = new BABYLON.StandardMaterial("borderMat", scene);
-  borderMaterial.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1); // Dark color for border
-  border.material = borderMaterial;
 };

@@ -56,7 +56,7 @@ export const positionPieces = (state, scene) => {
       piece.position = new BABYLON.Vector3(
         player === "A" ? -5 : 5,
         0.2,
-        offBoardIndex * 0.5 - 1
+        (offBoardIndex * 0.9) - 8
       );
       if (player === "A") offBoardA++;
       else offBoardB++;
