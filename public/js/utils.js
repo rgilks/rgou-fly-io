@@ -1,4 +1,4 @@
-// 
+//
 export const getPositionIndex = (position) => {
   const row = Math.round(position.z + 1);
   const col = Math.round(position.x + 3.5);

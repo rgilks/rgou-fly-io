@@ -50,7 +50,7 @@ const Handler = struct {
         return Handler{
             .conn = conn,
             .context = context,
-            .game_state = engine.initGame(&context.prng.random()),
+            .game_state = undefined, // We'll initialize this when a new game is requested
             .ai_player = ai.AIPlayer.init(context.allocator),
         };
     }
@@ -62,7 +62,7 @@ const Handler = struct {
             .binary => try self.conn.writeBin(data),
             .text => {
                 const stdout = std.io.getStdOut().writer();
-                try stdout.print("Processing message...\n", .{});
+                try stdout.print("Processing message: {s}\n", .{data});
 
                 const parsed = try std.json.parseFromSlice(std.json.Value, self.context.allocator, data, .{});
                 defer parsed.deinit();
@@ -72,24 +72,47 @@ const Handler = struct {
                 if (std.mem.eql(u8, msg_type.string, "new_game")) {
                     self.game_state = engine.initGame(&self.context.prng.random());
                     try self.sendGameState();
+                } else if (std.mem.eql(u8, msg_type.string, "roll_dice")) {
+                    if (engine.getCurrentPlayer(self.game_state) == .A) {
+                        const roll = engine.rollDice(&self.context.prng);
+                        engine.setDiceRoll(&self.game_state, roll);
+                        try self.sendGameState();
+                    }
                 } else if (std.mem.eql(u8, msg_type.string, "make_move")) {
-                    const from = @as(u6, @intCast(parsed.value.object.get("from").?.integer));
-                    const to = @as(u6, @intCast(parsed.value.object.get("to").?.integer));
-                    const move = engine.Move{ .from = from, .to = to, .captured = null, .player = engine.getCurrentPlayer(self.game_state) };
-                    engine.makeMove(&self.game_state, move);
-                    try self.sendGameState();
-
-                    // AI's turn
-                    if (!engine.isGameOver(self.game_state)) {
-                        const ai_move = try self.ai_player.getBestMove(self.game_state);
-                        if (ai_move) |m| {
-                            engine.makeMove(&self.game_state, m);
-                            try self.sendGameState();
-                        }
+                    if (engine.getCurrentPlayer(self.game_state) == .A) {
+                        const from = @as(u6, @intCast(parsed.value.object.get("from").?.integer));
+                        const to = @as(u6, @intCast(parsed.value.object.get("to").?.integer));
+                        const move = engine.Move{ .from = from, .to = to, .captured = null, .player = .A };
+                        engine.makeMove(&self.game_state, move);
+                        try self.sendGameState();
+                        try self.handleAITurn();
+                    }
+                } else if (std.mem.eql(u8, msg_type.string, "end_turn")) {
+                    if (engine.getCurrentPlayer(self.game_state) == .A) {
+                        engine.setCurrentPlayer(&self.game_state, .B);
+                        try self.sendGameState();
+                        try self.handleAITurn();
                     }
                 }
             },
             else => unreachable,
+        }
+    }
+
+    fn handleAITurn(self: *Handler) !void {
+        while (engine.getCurrentPlayer(self.game_state) == .B and !engine.isGameOver(self.game_state)) {
+            const ai_roll = engine.rollDice(&self.context.prng);
+            engine.setDiceRoll(&self.game_state, ai_roll);
+            const ai_move = try self.ai_player.getBestMove(self.game_state);
+            if (ai_move) |m| {
+                engine.makeMove(&self.game_state, m);
+            } else {
+                engine.setCurrentPlayer(&self.game_state, .A);
+            }
+            try self.sendGameState();
+
+            // Add a small delay between AI actions
+            std.time.sleep(500 * std.time.ns_per_ms);
         }
     }
 
@@ -106,6 +129,7 @@ const Handler = struct {
             .current_player = @tagName(engine.getCurrentPlayer(self.game_state)),
             .dice_roll = engine.getDiceRoll(self.game_state),
             .moves = moves.items,
+            .game_over = engine.isGameOver(self.game_state),
         }, .{}, game_state_json.writer());
 
         try self.conn.writeText(game_state_json.items);

@@ -1,3 +1,5 @@
+import { getPositionIndex, getPositionFromIndex } from "./utils.js";
+
 const PIECES_PER_PLAYER = 7;
 const BOARD_SIZE = 24;
 
@@ -62,8 +64,16 @@ export const positionPieces = (state, scene) => {
   });
 };
 
-const getPositionFromIndex = (index) => {
-  const row = Math.floor(index / 8);
-  const col = index % 8;
-  return new BABYLON.Vector3(col - 3.5, 0.2, row - 1);
+export const highlightSelectablePieces = (scene, gameState) => {
+  scene.meshes.forEach((mesh) => {
+    if (mesh.name.startsWith("piece_A")) {
+      const pieceIndex = getPositionIndex(mesh.position);
+      const canMove = gameState.moves.some((move) => move.from === pieceIndex);
+      if (canMove) {
+        mesh.material.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0);
+      } else {
+        mesh.material.emissiveColor = new BABYLON.Color3(0, 0, 0);
+      }
+    }
+  });
 };

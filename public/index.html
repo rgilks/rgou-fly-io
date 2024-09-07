@@ -1,110 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Royal Game of Ur - 3D</title>
     <style>
-        html, body {
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #renderCanvas {
-            width: 100%;
-            height: 100%;
-            touch-action: none;
-        }
-        #gameInfo {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-family: Arial, sans-serif;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #diceRoll {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            font-size: 24px;
-            color: white;
-        }
+      html,
+      body {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+      #gameInfo {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        font-family: Arial, sans-serif;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+      }
+      #diceRoll {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-size: 24px;
+        color: white;
+      }
+      #controls {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+      }
+      button {
+        margin: 5px;
+        padding: 10px;
+        font-size: 16px;
+      }
     </style>
     <!-- Load BabylonJS scripts -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
     <!-- Load Earcut library -->
     <script src="https://unpkg.com/earcut@2.2.4/dist/earcut.min.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <canvas id="renderCanvas"></canvas>
     <div id="gameInfo"></div>
     <div id="diceRoll"></div>
-    
+    <div id="controls">
+      <button id="rollDiceBtn">Roll Dice</button>
+      <button id="endTurnBtn">End Turn</button>
+    </div>
+
     <script type="importmap">
-    {
-      "imports": {
-        "board": "/js/board.js",
-        "pieces": "/js/pieces.js",
-        "game": "/js/game.js",
-        "websocket": "/js/websocket.js",
-        "utils": "/js/utils.js"
+      {
+        "imports": {
+          "board": "/js/board.js",
+          "pieces": "/js/pieces.js",
+          "game": "/js/game.js",
+          "websocket": "/js/websocket.js",
+          "utils": "/js/utils.js"
+        }
       }
-    }
     </script>
-    
-    <script type="module">
-        import { createScene } from 'board';
-        import { createPieces, positionPieces } from 'pieces';
-        import { initGame, handlePieceClick } from 'game';
-        import { setupWebSocket } from 'websocket';
-        import { animateDiceRoll } from 'utils';
 
-        const canvas = document.getElementById("renderCanvas");
-        const engine = new BABYLON.Engine(canvas, true);
-        const gameInfoDiv = document.getElementById("gameInfo");
-        const diceRollDiv = document.getElementById("diceRoll");
-
-        let scene;
-        let gameState = null;
-
-        const main = async () => {
-            scene = createScene(engine, canvas);
-            const pieces = createPieces(scene);
-
-            scene.onPointerDown = (evt, pickResult) => {
-                handlePieceClick(pickResult, gameState, scene);
-            };
-
-            engine.runRenderLoop(() => {
-                scene.render();
-            });
-
-            window.addEventListener("resize", () => {
-                engine.resize();
-            });
-
-            try {
-                const socket = await setupWebSocket(updateGameState);
-                await initGame(socket);
-            } catch (error) {
-                console.error("Failed to setup WebSocket or initialize game:", error);
-            }
-        };
-
-        const updateGameState = (newState) => {
-            gameState = newState;
-            positionPieces(gameState.state, scene);
-            gameInfoDiv.textContent = `Current player: ${gameState.current_player}`;
-            diceRollDiv.textContent = `Dice roll: ${gameState.dice_roll}`;
-        };
-
-        main();
-    </script>
-</body>
+    <script type="module" src="/js/main.js"></script>
+  </body>
 </html>

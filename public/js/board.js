@@ -1,4 +1,4 @@
-// 
+//
 export const createScene = (engine, canvas) => {
   const scene = new BABYLON.Scene(engine);
   const camera = new BABYLON.ArcRotateCamera(
