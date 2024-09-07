@@ -1,200 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Royal Game of Ur - WebSocket Client</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Game of Ur - 3D</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      #gameBoard {
-        font-family: monospace;
-        white-space: pre;
-        background-color: #f0f0f0;
-        padding: 10px;
-        border-radius: 5px;
-      }
-      .move-button {
-        margin: 2px;
-        padding: 5px 10px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        cursor: pointer;
-        border-radius: 3px;
-      }
-      .move-button:hover {
-        background-color: #45a049;
-      }
-      #gameInfo {
-        margin-top: 10px;
-        font-weight: bold;
-      }
-      #output {
-        margin-top: 20px;
-        border-top: 1px solid #ccc;
-        padding-top: 10px;
-      }
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        #gameInfo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #diceRoll {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: white;
+        }
     </style>
-  </head>
-  <body>
-    <h1>Royal Game of Ur</h1>
-    <button onclick="newGame()">New Game</button>
-    <pre id="gameBoard"></pre>
+    <!-- Load BabylonJS scripts -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <!-- Load Earcut library -->
+    <script src="https://unpkg.com/earcut@2.2.4/dist/earcut.min.js"></script>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
     <div id="gameInfo"></div>
-    <div id="moves"></div>
-    <div id="output"></div>
-
-    <script>
-      const wsUrl = location.hostname === 'rgou.fly.dev' 
-        ? 'wss://rgou.fly.dev/ws'
-        : 'ws://localhost:9223/ws';
-      
-      const socket = new WebSocket(wsUrl);
-
-      let gameState = null;
-
-      socket.onopen = function (e) {
-        console.log("WebSocket connection established");
-        appendMessage("Connected to server");
-        newGame();
-      };
-
-      socket.onmessage = function (event) {
-        console.log("Message received:", event.data);
-        const message = JSON.parse(event.data);
-
-        if (message.type === 'game_state') {
-          gameState = message.state;
-          updateGameBoard(message);
-          updateGameInfo(message);
-          updateMoves(message.moves);
-
-          if (message.current_player === 'B') {
-            appendMessage("AI is thinking...");
-          }
-        } else {
-          appendMessage(`Received: ${event.data}`);
-        }
-      };
-
-      socket.onclose = function (event) {
-        console.log("WebSocket connection closed:", event);
-        appendMessage("Connection closed");
-      };
-
-      socket.onerror = function (error) {
-        console.error("WebSocket error:", error);
-        appendMessage(`Error: ${error.message}`);
-      };
-
-      function newGame() {
-        socket.send(JSON.stringify({ type: "new_game" }));
+    <div id="diceRoll"></div>
+    
+    <script type="importmap">
+    {
+      "imports": {
+        "board": "/js/board.js",
+        "pieces": "/js/pieces.js",
+        "game": "/js/game.js",
+        "websocket": "/js/websocket.js",
+        "utils": "/js/utils.js"
       }
+    }
+    </script>
+    
+    <script type="module">
+        import { createScene } from 'board';
+        import { createPieces, positionPieces } from 'pieces';
+        import { initGame, handlePieceClick } from 'game';
+        import { setupWebSocket } from 'websocket';
+        import { animateDiceRoll } from 'utils';
 
-      function makeMove(from, to) {
-        socket.send(JSON.stringify({ type: "make_move", from: from, to: to }));
-      }
-
-      function updateGameBoard(message) {
-        const boardDiv = document.getElementById("gameBoard");
-        boardDiv.textContent = displayBoard(message);
-      }
-
-      function updateGameInfo(message) {
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
         const gameInfoDiv = document.getElementById("gameInfo");
-        gameInfoDiv.textContent = `Current player: ${message.current_player}, Dice roll: ${message.dice_roll}`;
-      }
+        const diceRollDiv = document.getElementById("diceRoll");
 
-      function updateMoves(moves) {
-        const movesDiv = document.getElementById("moves");
-        movesDiv.innerHTML = '';
-        if (moves.length === 0) {
-          movesDiv.textContent = "No moves available. Waiting for opponent...";
-        } else {
-          moves.forEach((move, index) => {
-            const button = document.createElement('button');
-            button.textContent = `${index + 1}. ${getPositionName(move.from)} → ${getPositionName(move.to)}`;
-            button.onclick = () => makeMove(move.from, move.to);
-            button.className = 'move-button';
-            movesDiv.appendChild(button);
-          });
-        }
-      }
+        let scene;
+        let gameState = null;
 
-      function appendMessage(message) {
-        const outputDiv = document.getElementById("output");
-        outputDiv.innerHTML += `<p>${message}</p>`;
-      }
+        const main = async () => {
+            scene = createScene(engine, canvas);
+            const pieces = createPieces(scene);
 
-      function displayBoard(message) {
-        const state = BigInt(message.state);
-        const board = [];
-        for (let i = 0; i < 24; i++) {
-          board[i] = Number((state >> BigInt(16 + i * 2)) & 3n);
-        }
+            scene.onPointerDown = (evt, pickResult) => {
+                handlePieceClick(pickResult, gameState, scene);
+            };
 
-        const symbols = {
-          empty: "-",
-          playerA: "O",
-          playerB: "X",
-          rosette: "+",
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
+
+            window.addEventListener("resize", () => {
+                engine.resize();
+            });
+
+            const socket = setupWebSocket(updateGameState);
+            await initGame(socket);
         };
 
-        const isRosette = (pos) => [0, 6, 11, 16, 22].includes(pos);
-        const isExcluded = (pos) => [4, 5, 20, 21].includes(pos);
+        const updateGameState = (newState) => {
+            gameState = newState;
+            positionPieces(gameState.state, scene);
+            gameInfoDiv.textContent = `Current player: ${gameState.current_player}`;
+            diceRollDiv.textContent = `Dice roll: ${gameState.dice_roll}`;
+        };
 
-        let output = "\n     1 2 3 4 5 6 7 8\n";
-        output += "  ------------------ \n";
-
-        const rows = ["A", "B", "C"];
-        for (let i = 0; i < 3; i++) {
-          output += `  ${rows[i]}  `;
-          for (let j = 0; j < 8; j++) {
-            const pos = i * 8 + j;
-            if (isExcluded(pos)) {
-              output += "  ";
-              continue;
-            }
-            const cell = board[pos];
-            if (cell === 0) {
-              output += isRosette(pos) ? symbols.rosette : symbols.empty;
-            } else if (cell === 1) {
-              output += symbols.playerA;
-            } else if (cell === 2) {
-              output += symbols.playerB;
-            }
-            output += " ";
-          }
-          output += "\n";
-        }
-
-        output += "  ------------------ \n";
-
-        const playerAOff = Number(state & 7n);
-        const playerBOff = Number((state >> 3n) & 7n);
-        const playerACompleted = Number((state >> 6n) & 7n);
-        const playerBCompleted = Number((state >> 9n) & 7n);
-
-        output += `   ${playerAOff} > ${playerACompleted} `;
-        for (let i = 0; i < 4; i++) {
-          output += i < message.dice_roll ? "1" : "0";
-        }
-        output += ` ${playerBOff} > ${playerBCompleted}\n`;
-
-        return output;
-      }
-
-      function getPositionName(pos) {
-        if (pos === 24) return "off";
-        const row = Math.floor(pos / 8);
-        const col = pos % 8 + 1;
-        return ['A', 'B', 'C'][row] + col;
-      }
+        main();
     </script>
-  </body>
+</body>
 </html>
