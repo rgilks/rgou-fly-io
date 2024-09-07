@@ -67,6 +67,7 @@ const createSquares = (scene) => {
       { width: 0.98, height: 0.5, depth:  0.98},
       scene
     );
+    square.index = index;
     square.position.set(x - 3.5, 0.05, z - 1);
 
     const squareMaterial = new BABYLON.StandardMaterial(

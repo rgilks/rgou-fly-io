@@ -23,8 +23,8 @@ export const handlePieceClick = (pickResult, gameState, scene, makeMove) => {
       highlightValidMoves(pickResult.pickedMesh, gameState, scene, makeMove);
     }
   } else if (pickResult.hit && pickResult.pickedMesh.name === "moveHighlight") {
-    const move = gameState.moves.find((m) =>
-      getPositionFromIndex(m.to).equals(pickResult.pickedMesh.position)
+    const move = gameState.moves.find(
+      (m) => m.to === pickResult.pickedMesh.index
     );
     if (move) {
       makeMove(move.from, move.to);
@@ -37,11 +37,11 @@ export const handlePieceClick = (pickResult, gameState, scene, makeMove) => {
 
 const highlightValidMoves = (piece, gameState, scene, makeMove) => {
   clearHighlights(scene);
-  console.log("Highlighting valid moves for", getPositionIndex(piece.position));
+  console.log("Highlighting valid moves for", piece.index);
   // const validMoves = gameState.moves.filter(
-  //   (move) => move.from === getPositionIndex(piece.position)
+  //   (move) => move.from === piece.index
   // );
-  const validMoves = gameState.moves
+  const validMoves = gameState.moves;
 
   console.log("Valid moves:", validMoves);
 
@@ -51,6 +51,7 @@ const highlightValidMoves = (piece, gameState, scene, makeMove) => {
       { height: 0.2, diameter: 0.8 },
       scene
     );
+    highlight.index = move.to;
     highlight.position = getPositionFromIndex(move.to);
     highlight.position.y += 0.05;
     highlight.material = new BABYLON.StandardMaterial("highlightMat", scene);

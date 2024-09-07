@@ -67,7 +67,7 @@ export const positionPieces = (state, scene) => {
 export const highlightSelectablePieces = (scene, gameState) => {
   scene.meshes.forEach((mesh) => {
     if (mesh.name.startsWith("piece_A")) {
-      const pieceIndex = getPositionIndex(mesh.position);
+      const pieceIndex = mesh.index;
       const canMove = gameState.moves.some((move) => move.from === pieceIndex);
       if (canMove) {
         mesh.material.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0);
