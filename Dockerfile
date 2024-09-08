@@ -3,19 +3,19 @@ FROM alpine:latest AS builder
 RUN apk add --no-cache zig
 
 WORKDIR /app
+
 COPY . .
-RUN zig build -Doptimize=ReleaseFast
 
-FROM debian:bullseye-slim
+RUN zig build
 
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+FROM nginx:alpine
 
-WORKDIR /app
+COPY --from=builder /app/zig-out/bin/rgou_server /app/rgou_server
 
-COPY --from=builder /app/zig-out/bin/rgou_server .
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY ./public /app/public
+COPY public /app/public
 
-EXPOSE 80
+EXPOSE 8080
+EXPOSE 9223
 
-CMD service nginx start && ./rgou_server
+CMD ["sh", "-c", "nginx && /app/rgou_server"]

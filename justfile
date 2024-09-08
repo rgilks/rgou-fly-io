@@ -29,8 +29,8 @@ concat:
 # Docker Build
 # =================
 
-# Docker Build
-docker-build:
+# Docker Build and Run
+dbr:
     #!/usr/bin/env bash
     docker build -t flyio/rgou:latest . 
-    docker run -v $(pwd):/app flyio/rgou:latest
+    docker run --rm -it -p 8080:8080 -p 9223:9223 flyio/rgou:latest

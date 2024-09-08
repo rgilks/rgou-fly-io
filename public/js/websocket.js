@@ -1,9 +1,7 @@
 export const setupWebSocket = (updateGameState) => {
   return new Promise((resolve, reject) => {
-    const wsUrl =
-      location.hostname === "rgou.fly.dev"
-        ? "wss://rgou.fly.dev/ws"
-        : "ws://localhost:9223/ws";
+    const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${wsProtocol}//${location.host}/ws`;
 
     const socket = new WebSocket(wsUrl);
 
