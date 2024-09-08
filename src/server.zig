@@ -52,7 +52,7 @@ const Handler = struct {
     pub fn init(_: Handshake, conn: *Conn, context: *Context) !Handler {
         const stdout = std.io.getStdOut().writer();
         try stdout.print("New connection\n", .{});
-        
+
         return Handler{
             .conn = conn,
             .context = context,
@@ -75,7 +75,16 @@ const Handler = struct {
 
                 const msg_type = parsed.value.object.get("type") orelse return error.InvalidMessageType;
 
-                if (std.mem.eql(u8, msg_type.string, "new_game")) {
+                if (std.mem.eql(u8, msg_type.string, "ping")) {
+                    var pong_json = std.ArrayList(u8).init(self.context.allocator);
+                    defer pong_json.deinit();
+
+                    try std.json.stringify(.{
+                        .type = "pong",
+                    }, .{}, pong_json.writer());
+
+                    try self.conn.writeText(pong_json.items);
+                } else if (std.mem.eql(u8, msg_type.string, "new_game")) {
                     self.game_state = engine.initGame(&self.context.prng.random());
                     try self.sendGameState();
                     if (engine.getCurrentPlayer(self.game_state) == .B) {
@@ -106,8 +115,10 @@ const Handler = struct {
                     try self.handleAITurn();
                 }
             },
-            else => {
-                try std.io.getStdOut().writer().print("Unexpected message type\n", .{});
+            .ping => try self.conn.writePong(""),
+            .pong => {},
+            .close => {
+                try stdout.print("WebSocket connection closed\n", .{});
             },
         }
     }

@@ -11,13 +11,11 @@ export const setupWebSocket = (updateGameState) => {
     });
 
     socket.addEventListener("message", (event) => {
-      console.log("Message received:", event.data);
+      console.log("Received:", event.data);
       const message = JSON.parse(event.data);
 
       if (message.type === "game_state") {
         updateGameState(message);
-      } else {
-        console.log("Received:", message);
       }
     });
 
@@ -28,6 +26,17 @@ export const setupWebSocket = (updateGameState) => {
     socket.addEventListener("error", (error) => {
       console.error("WebSocket error:", error);
       reject(error);
+    });
+
+    // Implement ping mechanism
+    const pingInterval = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 20000); // Send a ping every 20 seconds
+
+    socket.addEventListener("close", () => {
+      clearInterval(pingInterval);
     });
   });
 };
