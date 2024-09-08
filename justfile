@@ -23,14 +23,14 @@ setup-scripts:
 
 # Concatenate all relevant files (for an LLM to read)
 concat:
-    ./scripts/concat_files.sh . justfile .toml .zig .zon .md .dot .html .mjs .js -- zig-out/
+    ./scripts/concat_files.sh . justfile Dockwefile .conf .toml .zig .zon .md .dot .html .mjs .js -- zig-out/
 
 # =================
 # Docker Build
 # =================
 
-# Docker Build
-docker-build:
+# Docker Build and Run
+dbr:
     #!/usr/bin/env bash
     docker build -t flyio/rgou:latest . 
-    docker run -v $(pwd):/app flyio/rgou:latest
+    docker run --rm -it -p 8080:8080 -p 9223:9223 flyio/rgou:latest
