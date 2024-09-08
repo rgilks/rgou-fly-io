@@ -1,7 +1,9 @@
 export const setupWebSocket = (updateGameState) => {
   return new Promise((resolve, reject) => {
     const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${wsProtocol}//${location.host}/ws`;
+    const wsUrl = `${wsProtocol}//${
+      location.hostname === "127.0.0.1" ? "127.0.0.1:9223" : location.host
+    }/ws`;
 
     const socket = new WebSocket(wsUrl);
 
@@ -12,10 +14,11 @@ export const setupWebSocket = (updateGameState) => {
 
     socket.addEventListener("message", (event) => {
       console.log("Received:", event.data);
-      const message = JSON.parse(event.data);
-
-      if (message.type === "game_state") {
-        updateGameState(message);
+      if (event?.data.startsWith("{")) {
+        const message = JSON.parse(event.data);
+        if (message.type === "game_state") {
+          updateGameState(message);
+        }
       }
     });
 
