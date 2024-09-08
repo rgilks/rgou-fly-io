@@ -48,6 +48,9 @@ const Handler = struct {
     ai_player: ai.AIPlayer,
 
     pub fn init(_: Handshake, conn: *Conn, context: *Context) !Handler {
+        const stdout = std.io.getStdOut().writer();
+        try stdout.print("New connection\n", .{});
+        
         return Handler{
             .conn = conn,
             .context = context,
@@ -57,12 +60,12 @@ const Handler = struct {
     }
 
     pub fn handle(self: *Handler, message: Message) !void {
+        const stdout = std.io.getStdOut().writer();
         const data = message.data;
 
         switch (message.type) {
             .binary => try self.conn.writeBin(data),
             .text => {
-                const stdout = std.io.getStdOut().writer();
                 try stdout.print("msg: {s}\n", .{data});
 
                 const parsed = try std.json.parseFromSlice(std.json.Value, self.context.allocator, data, .{});
@@ -101,7 +104,9 @@ const Handler = struct {
                     try self.handleAITurn();
                 }
             },
-            else => unreachable,
+            else => {
+                try std.io.getStdOut().writer().print("Unexpected message type\n", .{});
+            },
         }
     }
 
@@ -110,9 +115,6 @@ const Handler = struct {
             const ai_roll = engine.rollDice(&self.context.prng);
             engine.setDiceRoll(&self.game_state, ai_roll);
             try self.sendGameState();
-
-            // Add a small delay to simulate "thinking"
-            std.time.sleep(1 * std.time.ns_per_s);
 
             const ai_move = try self.ai_player.getBestMove(self.game_state);
             if (ai_move) |m| {

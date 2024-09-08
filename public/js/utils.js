@@ -10,19 +10,6 @@ export const getPositionFromIndex = (index) => {
   return new BABYLON.Vector3(col - 3.5, 0.2, row - 1);
 };
 
-export const animateDiceRoll = (roll, diceRollDiv) => {
-  let frames = 20;
-  let interval = setInterval(() => {
-    if (frames > 0) {
-      diceRollDiv.textContent = `Dice roll: ${Math.floor(Math.random() * 5)}`;
-      frames--;
-    } else {
-      clearInterval(interval);
-      diceRollDiv.textContent = `Dice roll: ${roll}`;
-    }
-  }, 50);
-};
-
 export const printStateBinary = (state) => {
   // Convert state to binary string, pad with leading zeros
   let binString = state.toString(2).padStart(64, "0");

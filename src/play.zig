@@ -53,7 +53,6 @@ pub fn run() !void {
             engine.makeMove(&state, move);
             try view.printMove(move);
             
-            // Add a small delay after AI moves
             if (engine.getCurrentPlayer(state) == .A) {
                 try stdout.print("Press any key to continue...\n", .{});
                 _ = try readSingleChar();

@@ -7,7 +7,7 @@ import {
   highlightValidMoves,
   clearHighlights,
 } from "./pieces.js";
-import { animateDiceRoll, printStateBinary } from "./utils.js";
+import { printStateBinary } from "./utils.js";
 
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
