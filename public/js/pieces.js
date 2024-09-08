@@ -44,20 +44,17 @@ export const positionPieces = (state, scene) => {
   // Get pieces off board for each player
   const offBoardA = state & 0b111;
   const offBoardB = (state >> 3) & 0b111;
+  const completedA = (state >> 6) & 0b111;
+  const completedB = (state >> 9) & 0b111;
+
+  console.log("Off board A:", offBoardA, "Off board B:", offBoardB);
+  console.log("Completed A:", completedA, "Completed B:", completedB);
 
   // Position off-board pieces
   positionOffBoardPieces(scene, "A", offBoardA);
   positionOffBoardPieces(scene, "B", offBoardB);
 
   const piecePositions = getPiecePositions(state);
-
-  // Hide all on-board pieces initially
-  for (let i = 0; i < PIECES_PER_PLAYER; i++) {
-    const pieceA = scene.getMeshByName(`piece_A_${i}`);
-    const pieceB = scene.getMeshByName(`piece_B_${i}`);
-    if (pieceA) pieceA.visibility = 0;
-    if (pieceB) pieceB.visibility = 0;
-  }
 
   // Position on-board pieces
   let aOnBoard = 0;
@@ -94,12 +91,7 @@ function positionOffBoardPieces(scene, player, count) {
   for (let i = 0; i < PIECES_PER_PLAYER; i++) {
     const piece = scene.getMeshByName(`piece_${player}_${i}`);
     if (piece) {
-      if (i < count) {
-        piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 1);
-        piece.visibility = 1;
-      } else {
-        piece.visibility = 0;
-      }
+        piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
     }
   }
 }
