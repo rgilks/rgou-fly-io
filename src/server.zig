@@ -28,10 +28,12 @@ pub fn main() !void {
         .address = "0.0.0.0",
         .handshake_timeout_ms = 3000,
         .handshake_pool_count = 10,
-        .handshake_max_size = 1024,
+        .handshake_max_size = 4096,
         .buffer_size = 8192,
         .max_size = 20_000_000,
     };
+
+    std.debug.print("Starting WebSocket server on port 9223...\n", .{});
 
     try websocket.listen(Handler, allocator, &context, config);
 }
