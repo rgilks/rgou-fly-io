@@ -27,12 +27,12 @@ export const printStateBinary = (state) => {
 
   let boardState = parts[0];
   let formattedBoardState = [];
-  
+
   for (let i = 0; i < 24; i++) {
     formattedBoardState.push(boardState.slice(i * 2, i * 2 + 2));
   }
-  
-  formattedBoardState = formattedBoardState.join(' ');
+
+  formattedBoardState = formattedBoardState.join(" ");
 
   // Combine all parts
   let result = `${formattedBoardState.trim()} ${parts[1]} ${parts[2]} ${

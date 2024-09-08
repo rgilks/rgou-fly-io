@@ -9,7 +9,7 @@ export const createPieces = (scene) => {
     for (let i = 0; i < PIECES_PER_PLAYER; i++) {
       const piece = BABYLON.MeshBuilder.CreateCylinder(
         `piece_${player}_${i}`,
-        { height: 0.5, diameter: 0.8 },
+        { height: 0.7, diameter: 0.8 },
         scene
       );
       piece.material = new BABYLON.StandardMaterial(
@@ -87,14 +87,14 @@ const positionOffBoardPieces = (scene, player, count) => {
   for (let i = 0; i < PIECES_PER_PLAYER; i++) {
     const piece = scene.getMeshByName(`piece_${player}_${i}`);
     if (piece) {
-        piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
+      piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
     }
   }
-}
+};
 
 const isExcluded = (position) => {
   return position === 5 || position === 21; // Only exclude positions 5 and 21
-}
+};
 
 export const highlightValidMoves = (scene, gameState) => {
   clearHighlights(scene);
@@ -105,19 +105,19 @@ export const highlightValidMoves = (scene, gameState) => {
       const exitPosition = gameState.current_player === "A" ? 5 : 21;
       highlight = BABYLON.MeshBuilder.CreateCylinder(
         "moveHighlight",
-        { height: 0.7, diameter: 0.4 },
+        { height: 0.7, diameter: 0.5 },
         scene
       );
       highlight.position = getPositionFromIndex(exitPosition);
     } else {
       highlight = BABYLON.MeshBuilder.CreateCylinder(
         "moveHighlight",
-        { height: 0.7, diameter: 0.4 },
+        { height: 0.7, diameter: 0.63 },
         scene
       );
       highlight.position = getPositionFromIndex(move.to);
     }
-    
+
     highlight.position.y = 0.3; // Slightly above the board
     highlight.material = new BABYLON.StandardMaterial("highlightMat", scene);
     highlight.material.diffuseColor = new BABYLON.Color3(0, 1, 0);

@@ -16,7 +16,11 @@ export const handlePieceClick = (pickResult, gameState, scene, makeMove) => {
     return;
   }
 
-  if (pickResult.hit && (pickResult.pickedMesh.name === "moveHighlight" || pickResult.pickedMesh.name.startsWith("exitSquare"))) {
+  if (
+    pickResult.hit &&
+    (pickResult.pickedMesh.name === "moveHighlight" ||
+      pickResult.pickedMesh.name.startsWith("exitSquare"))
+  ) {
     const move = pickResult.pickedMesh.move;
     if (move) {
       makeMove(move.from, move.to);

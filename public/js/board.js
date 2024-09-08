@@ -75,4 +75,3 @@ const createSquares = (scene) => {
     square.material = squareMaterial;
   });
 };
-
