@@ -82,7 +82,7 @@ export const positionPieces = (state, scene) => {
   }
 };
 
-function positionOffBoardPieces(scene, player, count) {
+const positionOffBoardPieces = (scene, player, count) => {
   const xPosition = player === "A" ? -5 : 5;
   for (let i = 0; i < PIECES_PER_PLAYER; i++) {
     const piece = scene.getMeshByName(`piece_${player}_${i}`);
@@ -92,7 +92,7 @@ function positionOffBoardPieces(scene, player, count) {
   }
 }
 
-function isExcluded(position) {
+const isExcluded = (position) => {
   return position === 5 || position === 21; // Only exclude positions 5 and 21
 }
 
