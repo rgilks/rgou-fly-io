@@ -21,6 +21,7 @@ let socket;
 
 const updateGameState = (newState) => {
   gameState = newState;
+  saveGameState(newState);
   printStateBinary(gameState.state);
   positionPieces(gameState.state, scene);
 
@@ -73,6 +74,15 @@ const makeMove = async (from, to) => {
   }
 };
 
+const saveGameState = (state) => {
+  localStorage.setItem('gameState', JSON.stringify(state));
+};
+
+const loadGameState = () => {
+  const savedState = localStorage.getItem('gameState');
+  return savedState ? JSON.parse(savedState) : null;
+};
+
 const main = async () => {
   scene = createScene(engine, canvas);
   createPieces(scene);
@@ -108,7 +118,12 @@ const main = async () => {
 
   try {
     socket = await setupWebSocket(updateGameState);
-    await initGame(socket);
+    const savedState = loadGameState();
+    if (savedState) {
+      await socket.send(JSON.stringify({ type: "restore_game", state: savedState }));
+    } else {
+      await initGame(socket);
+    }
   } catch (error) {
     console.error("Failed to setup WebSocket or initialize game:", error);
   }

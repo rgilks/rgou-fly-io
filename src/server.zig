@@ -90,6 +90,13 @@ const Handler = struct {
                     if (engine.getCurrentPlayer(self.game_state) == .B) {
                         try self.handleAITurn();
                     }
+                } else if (std.mem.eql(u8, msg_type.string, "restore_game")) {
+                    const saved_state = parsed.value.object.get("state") orelse return error.InvalidSavedState;
+                    self.game_state = @intCast(saved_state.object.get("state").?.integer);
+                    try self.sendGameState();
+                    if (engine.getCurrentPlayer(self.game_state) == .B) {
+                        try self.handleAITurn();
+                    }
                 } else if (std.mem.eql(u8, msg_type.string, "roll_dice")) {
                     if (engine.getCurrentPlayer(self.game_state) == .A) {
                         const roll = engine.rollDice(&self.context.prng);
