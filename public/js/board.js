@@ -1,4 +1,3 @@
-//
 export const createScene = (engine, canvas) => {
   const scene = new BABYLON.Scene(engine);
   const camera = new BABYLON.ArcRotateCamera(
@@ -22,10 +21,6 @@ export const createScene = (engine, canvas) => {
 };
 
 const createBoard = (scene) => {
-  const boardWidth = 8;
-  const boardHeight = 3;
-  const squareSize = 1;
-
   createSquares(scene);
 };
 
@@ -68,7 +63,7 @@ const createSquares = (scene) => {
       scene
     );
     square.index = index;
-    square.position.set(x - 3.5, 0.05, z - 1);
+    square.position.set(x - 3.5, 0.2, z - 1);
 
     const squareMaterial = new BABYLON.StandardMaterial(
       `squareMat_${index}`,
@@ -80,3 +75,4 @@ const createSquares = (scene) => {
     square.material = squareMaterial;
   });
 };
+

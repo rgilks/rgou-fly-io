@@ -28,7 +28,6 @@ export const createPieces = (scene) => {
 };
 
 export const getPiecePositions = (state) => {
-  // Convert state to binary string, pad with leading zeros
   let binString = state.toString(2).padStart(64, "0");
   let boardState = binString.slice(0, 48);
   let formattedBoardState = [];
@@ -41,7 +40,6 @@ export const getPiecePositions = (state) => {
 };
 
 export const positionPieces = (state, scene) => {
-  // Get pieces off board for each player
   const offBoardA = state & 0b111;
   const offBoardB = (state >> 3) & 0b111;
   const completedA = (state >> 6) & 0b111;
@@ -50,17 +48,15 @@ export const positionPieces = (state, scene) => {
   console.log("Off board A:", offBoardA, "Off board B:", offBoardB);
   console.log("Completed A:", completedA, "Completed B:", completedB);
 
-  // Position off-board pieces
   positionOffBoardPieces(scene, "A", offBoardA);
   positionOffBoardPieces(scene, "B", offBoardB);
 
   const piecePositions = getPiecePositions(state);
 
-  // Position on-board pieces
   let aOnBoard = 0;
   let bOnBoard = 0;
   for (let i = 0; i < BOARD_SIZE; i++) {
-    if (isExcluded(i)) continue;
+    if (isExcluded(i) && i !== 4 && i !== 20) continue; // Allow positions 4 and 20 (exit squares)
 
     const position = piecePositions[i];
 
@@ -97,20 +93,31 @@ function positionOffBoardPieces(scene, player, count) {
 }
 
 function isExcluded(position) {
-  return position === 4 || position === 5 || position === 20 || position === 21;
+  return position === 5 || position === 21; // Only exclude positions 5 and 21
 }
 
 export const highlightValidMoves = (scene, gameState) => {
   clearHighlights(scene);
   gameState.moves.forEach((move) => {
-    if (move.to === BOARD_SIZE) return; // Skip highlighting for moves off the board
-
-    const highlight = BABYLON.MeshBuilder.CreateCylinder(
-      "moveHighlight",
-      { height: 0.7, diameter: 0.4 },
-      scene
-    );
-    highlight.position = getPositionFromIndex(move.to);
+    let highlight;
+    if (move.to === BOARD_SIZE) {
+      // Highlight the exit square
+      const exitPosition = gameState.current_player === "A" ? 5 : 21;
+      highlight = BABYLON.MeshBuilder.CreateCylinder(
+        "moveHighlight",
+        { height: 0.7, diameter: 0.4 },
+        scene
+      );
+      highlight.position = getPositionFromIndex(exitPosition);
+    } else {
+      highlight = BABYLON.MeshBuilder.CreateCylinder(
+        "moveHighlight",
+        { height: 0.7, diameter: 0.4 },
+        scene
+      );
+      highlight.position = getPositionFromIndex(move.to);
+    }
+    
     highlight.position.y = 0.3; // Slightly above the board
     highlight.material = new BABYLON.StandardMaterial("highlightMat", scene);
     highlight.material.diffuseColor = new BABYLON.Color3(0, 1, 0);

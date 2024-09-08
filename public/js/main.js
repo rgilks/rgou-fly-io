@@ -83,49 +83,89 @@ const loadGameState = () => {
   return savedState ? JSON.parse(savedState) : null;
 };
 
+
+const saveCameraPosition = (scene) =>{
+  const camera = scene.activeCamera;
+  const cameraPosition = {
+      alpha: camera.alpha,
+      beta: camera.beta,
+      radius: camera.radius,
+      target: {
+          x: camera.target.x,
+          y: camera.target.y,
+          z: camera.target.z
+      }
+  };
+  localStorage.setItem('cameraPosition', JSON.stringify(cameraPosition));
+}
+
+const loadCameraPosition = (scene) => {
+  const savedPosition = localStorage.getItem('cameraPosition');
+  if (savedPosition) {
+      const cameraPosition = JSON.parse(savedPosition);
+      const camera = scene.activeCamera;
+      camera.alpha = cameraPosition.alpha;
+      camera.beta = cameraPosition.beta;
+      camera.radius = cameraPosition.radius;
+      camera.target = new BABYLON.Vector3(
+          cameraPosition.target.x,
+          cameraPosition.target.y,
+          cameraPosition.target.z
+      );
+  }
+}
+
 const main = async () => {
   scene = createScene(engine, canvas);
   createPieces(scene);
 
+  // Load camera position after creating the scene
+  loadCameraPosition(scene);
+
   scene.onPointerDown = (evt, pickResult) => {
-    if (
-      gameState &&
-      gameState.current_player === "A" &&
-      gameState.dice_roll > 0
-    ) {
-      handlePieceClick(pickResult, gameState, scene, makeMove);
-    }
+      if (
+          gameState &&
+          gameState.current_player === "A" &&
+          gameState.dice_roll > 0
+      ) {
+          handlePieceClick(pickResult, gameState, scene, makeMove);
+      }
   };
 
   rollDiceBtn.addEventListener("click", async () => {
-    if (
-      gameState &&
-      gameState.current_player === "A" &&
-      gameState.dice_roll === 0
-    ) {
-      rollDiceBtn.disabled = true;
-      await rollDice(socket);
-    }
+      if (
+          gameState &&
+          gameState.current_player === "A" &&
+          gameState.dice_roll === 0
+      ) {
+          rollDiceBtn.disabled = true;
+          await rollDice(socket);
+      }
   });
 
   engine.runRenderLoop(() => {
-    scene.render();
+      scene.render();
   });
 
   window.addEventListener("resize", () => {
-    engine.resize();
+      engine.resize();
+  });
+
+  // Save camera position before the page unloads
+  window.addEventListener("beforeunload", () => {
+      saveCameraPosition(scene);
   });
 
   try {
-    socket = await setupWebSocket(updateGameState);
-    const savedState = loadGameState();
-    if (savedState) {
-      await socket.send(JSON.stringify({ type: "restore_game", state: savedState }));
-    } else {
-      await initGame(socket);
-    }
+      socket = await setupWebSocket(updateGameState);
+      const savedState = loadGameState();
+      if (savedState) {
+          await socket.send(JSON.stringify({ type: "restore_game", state: savedState }));
+      } else {
+          await initGame(socket);
+      }
   } catch (error) {
-    console.error("Failed to setup WebSocket or initialize game:", error);
+      console.error("Failed to setup WebSocket or initialize game:", error);
   }
 };
 
