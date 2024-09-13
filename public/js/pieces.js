@@ -48,8 +48,13 @@ export const positionPieces = (state, scene) => {
   console.log("Off board A:", offBoardA, "Off board B:", offBoardB);
   console.log("Completed A:", completedA, "Completed B:", completedB);
 
+  // Position off-board pieces
   positionOffBoardPieces(scene, "A", offBoardA);
   positionOffBoardPieces(scene, "B", offBoardB);
+
+  // Position completed pieces
+  positionCompletedPieces(scene, "A", completedA);
+  positionCompletedPieces(scene, "B", completedB);
 
   const piecePositions = getPiecePositions(state);
 
@@ -62,7 +67,7 @@ export const positionPieces = (state, scene) => {
 
     if (position === "01") {
       // Player A
-      const piece = scene.getMeshByName(`piece_A_${aOnBoard}`);
+      const piece = scene.getMeshByName(`piece_A_${aOnBoard + offBoardA}`);
       if (piece) {
         piece.position = getPositionFromIndex(i);
         piece.position.y = 0.25; // Half height of the piece
@@ -71,7 +76,7 @@ export const positionPieces = (state, scene) => {
       aOnBoard++;
     } else if (position === "10") {
       // Player B
-      const piece = scene.getMeshByName(`piece_B_${bOnBoard}`);
+      const piece = scene.getMeshByName(`piece_B_${bOnBoard + offBoardB}`);
       if (piece) {
         piece.position = getPositionFromIndex(i);
         piece.position.y = 0.25; // Half height of the piece
@@ -84,10 +89,29 @@ export const positionPieces = (state, scene) => {
 
 const positionOffBoardPieces = (scene, player, count) => {
   const xPosition = player === "A" ? -5 : 5;
-  for (let i = 0; i < PIECES_PER_PLAYER; i++) {
+  for (let i = 0; i < count; i++) {
     const piece = scene.getMeshByName(`piece_${player}_${i}`);
     if (piece) {
       piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
+      piece.visibility = 1;
+    }
+  }
+  // Hide unused pieces
+  for (let i = count; i < PIECES_PER_PLAYER; i++) {
+    const piece = scene.getMeshByName(`piece_${player}_${i}`);
+    if (piece) {
+      piece.visibility = 0;
+    }
+  }
+};
+
+const positionCompletedPieces = (scene, player, count) => {
+  const xPosition = player === "A" ? -6 : 6;
+  for (let i = 0; i < count; i++) {
+    const piece = scene.getMeshByName(`piece_${player}_${i + PIECES_PER_PLAYER - count}`);
+    if (piece) {
+      piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
+      piece.visibility = 1;
     }
   }
 };

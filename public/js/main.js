@@ -13,7 +13,6 @@ const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 const gameInfoDiv = document.getElementById("gameInfo");
 const diceRollDiv = document.getElementById("diceRoll");
-const rollDiceBtn = document.getElementById("rollDiceBtn");
 
 let scene;
 let gameState = null;
@@ -37,14 +36,13 @@ const updateGameState = (newState) => {
 
   if (gameState.game_over) {
     gameInfoDiv.textContent += " - Game Over!";
-    rollDiceBtn.disabled = true;
   } else if (gameState.current_player === "A") {
     if (gameState.dice_roll === 0) {
-      rollDiceBtn.disabled = false;
-      gameInfoDiv.textContent += " - Roll the dice!";
+      // Automatically roll the dice
+      rollDice(socket);
+      gameInfoDiv.textContent += " - Rolling the dice...";
       clearHighlights(scene);
     } else {
-      rollDiceBtn.disabled = true;
       if (gameState.moves.length > 0) {
         gameInfoDiv.textContent += " - Make a move";
         highlightValidMoves(scene, gameState);
@@ -56,13 +54,8 @@ const updateGameState = (newState) => {
       }
     }
   } else {
-    rollDiceBtn.disabled = true;
     gameInfoDiv.textContent += " - AI is thinking...";
     clearHighlights(scene);
-    // Trigger AI move
-    setTimeout(() => {
-      socket.send(JSON.stringify({ type: "ai_move" }));
-    }, 1000);
   }
 };
 
@@ -130,17 +123,6 @@ const main = async () => {
       handlePieceClick(pickResult, gameState, scene, makeMove);
     }
   };
-
-  rollDiceBtn.addEventListener("click", async () => {
-    if (
-      gameState &&
-      gameState.current_player === "A" &&
-      gameState.dice_roll === 0
-    ) {
-      rollDiceBtn.disabled = true;
-      await rollDice(socket);
-    }
-  });
 
   engine.runRenderLoop(() => {
     scene.render();

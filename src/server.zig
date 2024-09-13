@@ -131,7 +131,7 @@ const Handler = struct {
     }
 
     fn handleAITurn(self: *Handler) !void {
-        if (engine.getCurrentPlayer(self.game_state) == .B and !engine.isGameOver(self.game_state)) {
+        while (engine.getCurrentPlayer(self.game_state) == .B and !engine.isGameOver(self.game_state)) {
             const ai_roll = engine.rollDice(&self.context.prng);
             engine.setDiceRoll(&self.game_state, ai_roll);
             try self.sendGameState();
@@ -139,10 +139,18 @@ const Handler = struct {
             const ai_move = try self.ai_player.getBestMove(self.game_state);
             if (ai_move) |m| {
                 engine.makeMove(&self.game_state, m);
+                try self.sendGameState();
             } else {
+                // No moves available, pass turn to player
                 engine.setCurrentPlayer(&self.game_state, .A);
+                try self.sendGameState();
+                break;
             }
-            try self.sendGameState();
+
+            // Check if the AI gets another turn
+            if (engine.getCurrentPlayer(self.game_state) != .B) {
+                break;
+            }
         }
     }
 
