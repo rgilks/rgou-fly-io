@@ -1,6 +1,6 @@
 import { setupWebSocket } from "./websocket.js";
-import { initGame, handlePieceClick, rollDice } from "./game.js";
-import { createScene } from "./board.js";
+import { initGame, handlePieceClick } from "./game.js";
+import { createScene, rollDice } from "./board.js";
 import {
   createPieces,
   positionPieces,
@@ -40,7 +40,7 @@ const updateGameState = (newState) => {
   } else if (gameState.current_player === "A") {
     if (gameState.dice_roll === 0) {
       // Automatically roll the dice
-      rollDice(socket);
+      rollDiceAndUpdate();
       gameInfoDiv.textContent += " - Rolling the dice...";
       clearHighlights(scene);
     } else {
@@ -58,6 +58,11 @@ const updateGameState = (newState) => {
     gameInfoDiv.textContent += " - AI is thinking...";
     clearHighlights(scene);
   }
+};
+
+const rollDiceAndUpdate = async () => {
+  const rollResult = await rollDice(scene);
+  socket.send(JSON.stringify({ type: "set_dice_roll", roll: rollResult }));
 };
 
 const makeMove = async (from, to) => {
@@ -114,38 +119,38 @@ const restartGame = async () => {
 };
 
 const main = async () => {
-  scene = createScene(engine, canvas);
-  createPieces(scene);
-
-  // Load camera position after creating the scene
-  loadCameraPosition(scene);
-
-  scene.onPointerDown = (evt, pickResult) => {
-    if (
-      gameState &&
-      gameState.current_player === "A" &&
-      gameState.dice_roll > 0
-    ) {
-      handlePieceClick(pickResult, gameState, scene, makeMove);
-    }
-  };
-
-  engine.runRenderLoop(() => {
-    scene.render();
-  });
-
-  window.addEventListener("resize", () => {
-    engine.resize();
-  });
-
-  // Save camera position before the page unloads
-  window.addEventListener("beforeunload", () => {
-    saveCameraPosition(scene);
-  });
-
-  restartButton.addEventListener("click", restartGame);
-
   try {
+    scene = await createScene(engine, canvas);
+    createPieces(scene);
+
+    // Load camera position after creating the scene
+    loadCameraPosition(scene);
+
+    scene.onPointerDown = (evt, pickResult) => {
+      if (
+        gameState &&
+        gameState.current_player === "A" &&
+        gameState.dice_roll > 0
+      ) {
+        handlePieceClick(pickResult, gameState, scene, makeMove);
+      }
+    };
+
+    engine.runRenderLoop(() => {
+      scene.render();
+    });
+
+    window.addEventListener("resize", () => {
+      engine.resize();
+    });
+
+    // Save camera position before the page unloads
+    window.addEventListener("beforeunload", () => {
+      saveCameraPosition(scene);
+    });
+
+    restartButton.addEventListener("click", restartGame);
+
     socket = await setupWebSocket(updateGameState);
     const savedState = loadGameState();
     if (savedState) {
@@ -156,7 +161,7 @@ const main = async () => {
       await initGame(socket);
     }
   } catch (error) {
-    console.error("Failed to setup WebSocket or initialize game:", error);
+    console.error("Failed to setup game:", error);
   }
 };
 
