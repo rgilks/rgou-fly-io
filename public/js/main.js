@@ -13,6 +13,7 @@ const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 const gameInfoDiv = document.getElementById("gameInfo");
 const diceRollDiv = document.getElementById("diceRoll");
+const restartButton = document.getElementById("restartButton");
 
 let scene;
 let gameState = null;
@@ -107,6 +108,11 @@ const loadCameraPosition = (scene) => {
   }
 };
 
+const restartGame = async () => {
+  localStorage.removeItem("gameState");
+  await initGame(socket);
+};
+
 const main = async () => {
   scene = createScene(engine, canvas);
   createPieces(scene);
@@ -136,6 +142,8 @@ const main = async () => {
   window.addEventListener("beforeunload", () => {
     saveCameraPosition(scene);
   });
+
+  restartButton.addEventListener("click", restartGame);
 
   try {
     socket = await setupWebSocket(updateGameState);

@@ -44,3 +44,14 @@ dbr:
 dk:
     #!/usr/bin/env bash
     docker kill rgou_container || echo "Container is not running"
+
+# =================
+# Deployment
+# =================
+
+# Deploy to Fly.io
+deploy:
+    #!/usr/bin/env bash
+    chmod +x scripts/increment_versions.sh
+    scripts/increment_versions.sh
+    fly deploy
