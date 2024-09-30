@@ -25,12 +25,12 @@ update_version() {
 
 # List of files to update
 files=(
-    "/js/board.js"
-    "/js/pieces.js"
-    "/js/game.js"
-    "/js/websocket.js"
-    "/js/utils.js"
-    "/js/main.js"
+    "/js/board.mjs"
+    "/js/pieces.mjs"
+    "/js/game.mjs"
+    "/js/websocket.mjs"
+    "/js/utils.mjs"
+    "/js/main.mjs"
 )
 
 # Update versions for all files

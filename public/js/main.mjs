@@ -1,13 +1,13 @@
-import { setupWebSocket } from "./websocket.js";
-import { initGame, handlePieceClick, rollDice } from "./game.js";
-import { createScene } from "./board.js";
+import { setupWebSocket } from "./websocket.mjs";
+import { initGame, handlePieceClick, rollDice } from "./game.mjs";
+import { createScene } from "./board.mjs";
 import {
   createPieces,
   positionPieces,
   highlightValidMoves,
   clearHighlights,
-} from "./pieces.js";
-import { printStateBinary } from "./utils.js";
+} from "./pieces.mjs";
+import { printStateBinary } from "./utils.mjs";
 
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);

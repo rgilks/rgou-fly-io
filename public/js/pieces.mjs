@@ -1,4 +1,4 @@
-import { getPositionFromIndex } from "./utils.js";
+import { getPositionFromIndex } from "./utils.mjs";
 
 const PIECES_PER_PLAYER = 7;
 const BOARD_SIZE = 24;
