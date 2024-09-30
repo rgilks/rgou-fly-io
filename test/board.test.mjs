@@ -2,8 +2,14 @@ import { expect, test, describe, mock, beforeEach, spyOn } from "bun:test";
 import * as boardModule from "../public/js/board.mjs";
 
 describe("board.mjs", () => {
-  let mockScene, mockEngine, mockArcRotateCamera, mockHemisphericLight, 
-      mockMeshBuilder, mockStandardMaterial, mockColor3, mockVector3;
+  let mockScene,
+    mockEngine,
+    mockArcRotateCamera,
+    mockHemisphericLight,
+    mockMeshBuilder,
+    mockStandardMaterial,
+    mockColor3,
+    mockVector3;
 
   beforeEach(() => {
     mockScene = {
@@ -89,7 +95,7 @@ describe("board.mjs", () => {
     boardModule.createSquares(mockScene);
 
     const createdBox = global.BABYLON.MeshBuilder.CreateBox.mock.calls[0][1];
-    
+
     expect(createdBox.width).toBe(0.98);
     expect(createdBox.height).toBe(0.5);
     expect(createdBox.depth).toBe(0.98);
@@ -100,8 +106,8 @@ describe("board.mjs", () => {
     boardModule.createSquares(mockScene);
 
     // Check if Color3 was called with red color for rosettes
-    const rosetteCalls = global.BABYLON.Color3.mock.calls.filter(call => 
-      call[0] === 0.8 && call[1] === 0.1 && call[2] === 0.1
+    const rosetteCalls = global.BABYLON.Color3.mock.calls.filter(
+      (call) => call[0] === 0.8 && call[1] === 0.1 && call[2] === 0.1
     );
     expect(rosetteCalls.length).toBe(5); // 5 rosettes
   });

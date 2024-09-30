@@ -33,7 +33,8 @@ export const getPiecePositions = (state) => {
   let formattedBoardState = [];
 
   for (let i = 0; i < 24; i++) {
-    formattedBoardState.push(boardState.slice(i * 2, i * 2 + 2));
+    let position = boardState.slice(i * 2, i * 2 + 2);
+    formattedBoardState.push(position);
   }
 
   return formattedBoardState.reverse();
@@ -61,29 +62,29 @@ export const positionPieces = (state, scene) => {
   let aOnBoard = 0;
   let bOnBoard = 0;
   for (let i = 0; i < BOARD_SIZE; i++) {
-      if (isExcluded(i) && i !== 4 && i !== 20) continue; // Allow positions 4 and 20 (exit squares)
+    if (isExcluded(i) && i !== 4 && i !== 20) continue; // Allow positions 4 and 20 (exit squares)
 
-      const position = piecePositions[i];
+    const position = piecePositions[i];
 
-      if (position === "01") {
-          // Player A
-          const piece = scene.getMeshByName(`piece_A_${aOnBoard + offBoardA}`);
-          if (piece) {
-              piece.position = getPositionFromIndex(i);
-              piece.position.y = 0.25; // Half height of the piece
-              piece.visibility = 1;
-          }
-          aOnBoard++;
-      } else if (position === "10") {
-          // Player B
-          const piece = scene.getMeshByName(`piece_B_${bOnBoard + offBoardB}`);
-          if (piece) {
-              piece.position = getPositionFromIndex(i);
-              piece.position.y = 0.25; // Half height of the piece
-              piece.visibility = 1;
-          }
-          bOnBoard++;
+    if (position === "01") {
+      // Player A
+      const piece = scene.getMeshByName(`piece_A_${aOnBoard + offBoardA}`);
+      if (piece) {
+        piece.position = getPositionFromIndex(i);
+        piece.position.y = 0.25; // Half height of the piece
+        piece.visibility = 1;
       }
+      aOnBoard++;
+    } else if (position === "10") {
+      // Player B
+      const piece = scene.getMeshByName(`piece_B_${bOnBoard + offBoardB}`);
+      if (piece) {
+        piece.position = getPositionFromIndex(i);
+        piece.position.y = 0.25; // Half height of the piece
+        piece.visibility = 1;
+      }
+      bOnBoard++;
+    }
   }
 
   console.log(`Pieces on board - A: ${aOnBoard}, B: ${bOnBoard}`);
@@ -92,34 +93,36 @@ export const positionPieces = (state, scene) => {
 const positionOffBoardPieces = (scene, player, count) => {
   const xPosition = player === "A" ? -5 : 5;
   for (let i = 0; i < PIECES_PER_PLAYER; i++) {
-      const piece = scene.getMeshByName(`piece_${player}_${i}`);
-      if (piece) {
-          if (i < count) {
-              piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
-              piece.visibility = 1;
-          } else {
-              // Move pieces that are not off-board out of view
-              piece.position = new BABYLON.Vector3(xPosition, -5, 0);
-              piece.visibility = 1;
-          }
+    const piece = scene.getMeshByName(`piece_${player}_${i}`);
+    if (piece) {
+      if (i < count) {
+        piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
+        piece.visibility = 1;
+      } else {
+        // Move pieces that are not off-board out of view
+        piece.position = new BABYLON.Vector3(xPosition, -5, 0);
+        piece.visibility = 1;
       }
+    }
   }
 };
 
 const positionCompletedPieces = (scene, player, count) => {
   const xPosition = player === "A" ? -6 : 6;
   for (let i = 0; i < PIECES_PER_PLAYER; i++) {
-      const piece = scene.getMeshByName(`piece_${player}_${i + PIECES_PER_PLAYER - count}`);
-      if (piece) {
-          if (i < count) {
-              piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
-              piece.visibility = 1;
-          } else {
-              // Move pieces that are not completed out of view
-              piece.position = new BABYLON.Vector3(xPosition, -5, 0);
-              piece.visibility = 1;
-          }
+    const piece = scene.getMeshByName(
+      `piece_${player}_${i + PIECES_PER_PLAYER - count}`
+    );
+    if (piece) {
+      if (i < count) {
+        piece.position = new BABYLON.Vector3(xPosition, 0.25, i * 0.9 - 2.5);
+        piece.visibility = 1;
+      } else {
+        // Move pieces that are not completed out of view
+        piece.position = new BABYLON.Vector3(xPosition, -5, 0);
+        piece.visibility = 1;
       }
+    }
   }
 };
 
@@ -159,9 +162,11 @@ export const highlightValidMoves = (scene, gameState) => {
 };
 
 export const clearHighlights = (scene) => {
-  scene.meshes.forEach((mesh) => {
-    if (mesh.name === "moveHighlight") {
-      mesh.dispose();
-    }
-  });
+  scene.meshes
+    .filter((mesh) => mesh.name === "moveHighlight")
+    .forEach((mesh) => {
+      if (mesh.dispose && typeof mesh.dispose === "function") {
+        mesh.dispose();
+      }
+    });
 };

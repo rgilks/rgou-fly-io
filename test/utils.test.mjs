@@ -1,5 +1,9 @@
 import { expect, test, describe, spyOn } from "bun:test";
-import { getPositionIndex, getPositionFromIndex, printStateBinary } from "../public/js/utils.mjs";
+import {
+  getPositionIndex,
+  getPositionFromIndex,
+  printStateBinary,
+} from "../public/js/utils.mjs";
 
 // Mock BABYLON.Vector3
 class Vector3 {
@@ -36,14 +40,20 @@ describe("utils", () => {
 
   test("printStateBinary outputs correct format", () => {
     const logSpy = spyOn(console, "log");
-    
-    const testState = BigInt("0b1111000011110000111100001111000011110000111100001111000011110000");
+
+    const testState = BigInt(
+      "0b1111000011110000111100001111000011110000111100001111000011110000"
+    );
     printStateBinary(testState);
 
     expect(logSpy).toHaveBeenCalledTimes(2);
 
-    expect(logSpy.mock.calls[0][0]).toBe("23 22 xx xx 19 18 17 16 15 14 13 12 11 10  9  8  7  6 xx ET  3  2  1  0 ROL C BC  AC  BOB AOB");
-    expect(logSpy.mock.calls[1][0]).toBe("11 11 00 00 11 11 00 00 11 11 00 00 11 11 00 00 11 11 00 00 11 11 00 00 111 1 000 011 110 000");
+    expect(logSpy.mock.calls[0][0]).toBe(
+      "23 22 xx xx 19 18 17 16 15 14 13 12 11 10  9  8  7  6 xx ET  3  2  1  0 ROL C BC  AC  BOB AOB"
+    );
+    expect(logSpy.mock.calls[1][0]).toBe(
+      "11 11 00 00 11 11 00 00 11 11 00 00 11 11 00 00 11 11 00 00 11 11 00 00 111 1 000 011 110 000"
+    );
 
     logSpy.mockRestore();
   });
