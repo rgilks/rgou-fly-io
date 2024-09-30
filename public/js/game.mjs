@@ -1,4 +1,3 @@
-import { getPositionIndex, getPositionFromIndex } from "./utils.mjs";
 import { clearHighlights } from "./pieces.mjs";
 
 export const initGame = async (socket) => {
