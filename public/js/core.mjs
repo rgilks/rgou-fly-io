@@ -22,5 +22,5 @@ window.addEventListener("resize", () => {
 });
 
 window.addEventListener("beforeunload", () => {
-  game.saveCameraPosition(game.scene);
+  game.saveCameraPosition();
 });

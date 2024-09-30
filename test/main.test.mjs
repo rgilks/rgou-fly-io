@@ -301,7 +301,7 @@ describe("main.mjs", () => {
 //     );
 //   });
 
-  test("saveCameraPosition stores camera position in localStorage", () => {
+test("saveCameraPosition stores camera position in localStorage", () => {
     const deps = {
       canvas: mockCanvas,
       engine: mockEngine,
@@ -310,11 +310,27 @@ describe("main.mjs", () => {
       restartButton: mockRestartButton,
       localStorage: mockLocalStorage,
     };
-
+  
     const game = mainModule.createGame(deps);
-
-    game.saveCameraPosition(mockScene);
-
+  
+    // Mock the scene and activeCamera
+    const mockScene = {
+      activeCamera: {
+        alpha: 0,
+        beta: 0,
+        radius: 0,
+        target: { x: 0, y: 0, z: 0 },
+      },
+    };
+  
+    // Since `scene` is a closure variable inside `createGame`, we need a way to set it in the test.
+    // We'll modify `createGame` to expose a `setScene` method for testing purposes.
+  
+    // Set the mockScene within the game instance
+    game.setScene(mockScene);
+  
+    game.saveCameraPosition();
+  
     const savedPosition = JSON.parse(
       mockLocalStorage.getItem("cameraPosition")
     );

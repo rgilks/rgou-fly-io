@@ -74,7 +74,7 @@ export const createGame = (deps) => {
   const saveGameState = (state) => {
     const serializedState = {
       ...state,
-      state: state.state.toString()
+      state: state.state.toString(),
     };
     localStorage.setItem("gameState", JSON.stringify(serializedState));
   };
@@ -85,13 +85,13 @@ export const createGame = (deps) => {
       const parsedState = JSON.parse(savedState);
       return {
         ...parsedState,
-        state: parsedState.state
+        state: parsedState.state,
       };
     }
     return null;
   };
 
-  const saveCameraPosition = (scene) => {
+  const saveCameraPosition = () => {
     const camera = scene.activeCamera;
     const cameraPosition = {
       alpha: camera.alpha,
@@ -106,7 +106,7 @@ export const createGame = (deps) => {
     localStorage.setItem("cameraPosition", JSON.stringify(cameraPosition));
   };
 
-  const loadCameraPosition = (scene) => {
+  const loadCameraPosition = () => {
     const savedPosition = localStorage.getItem("cameraPosition");
     if (savedPosition) {
       const cameraPosition = JSON.parse(savedPosition);
@@ -130,7 +130,7 @@ export const createGame = (deps) => {
   const initialize = async () => {
     scene = createScene(engine, canvas);
     createPieces(scene);
-    loadCameraPosition(scene);
+    loadCameraPosition();
 
     scene.onPointerDown = (evt, pickResult) => {
       if (
@@ -166,5 +166,8 @@ export const createGame = (deps) => {
   return {
     initialize,
     saveCameraPosition,
+    setScene: (s) => {
+      scene = s;
+    },
   };
 };
