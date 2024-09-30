@@ -20,11 +20,11 @@ export const createScene = (engine, canvas) => {
   return scene;
 };
 
-const createBoard = (scene) => {
+export const createBoard = (scene) => {
   createSquares(scene);
 };
 
-const createSquares = (scene) => {
+export const createSquares = (scene) => {
   const squarePositions = [
     [0, 0],
     [1, 0],

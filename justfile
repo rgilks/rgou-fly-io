@@ -23,7 +23,10 @@ setup-scripts:
 
 # Concatenate all relevant files (for an LLM to read)
 concat:
-    ./scripts/concat_files.sh . justfile Dockwefile .conf .toml .zig .zon .md .dot .html .mjs .js -- zig-out/
+    ./scripts/concat_files.sh . justfile Dockerfile .conf .toml .zig .zon .md .dot .html .mjs .js -- zig-out/
+
+concat-js:
+    ./scripts/concat_files.sh . justfile Dockwefile .html .mjs .js -- zig-out/
 
 
 # Run live server
