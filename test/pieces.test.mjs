@@ -98,8 +98,9 @@ describe("pieces.mjs", () => {
 
   describe("positionPieces", () => {
     test("positions pieces correctly based on state", () => {
-      const testState =
-        BigInt("0b0101010101010101010101010101010101010101010101010101010101010101");
+      const testState = BigInt(
+        "0b0101010101010101010101010101010101010101010101010101010101010101"
+      );
       const getMeshByNameMock = mock((name) => ({
         position: { x: 0, y: 0, z: 0 },
         visibility: 0,
@@ -112,8 +113,9 @@ describe("pieces.mjs", () => {
     });
 
     test("handles off-board and completed pieces", () => {
-      const testState =
-        BigInt("0b0101010101010101010101010101010101010101010101010101010101111111");
+      const testState = BigInt(
+        "0b0101010101010101010101010101010101010101010101010101010101111111"
+      );
       const getMeshByNameMock = mock((name) => ({
         position: { x: 0, y: 0, z: 0 },
         visibility: 0,
