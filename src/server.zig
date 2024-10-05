@@ -92,10 +92,19 @@ const Handler = struct {
                     }
                 } else if (std.mem.eql(u8, msg_type.string, "restore_game")) {
                     const saved_state = parsed.value.object.get("state") orelse return error.InvalidSavedState;
-                    self.game_state = @intCast(saved_state.object.get("state").?.integer);
-                    try self.sendGameState();
-                    if (engine.getCurrentPlayer(self.game_state) == .B) {
-                        try self.handleAITurn();
+                    if (saved_state.object.get("state")) |state_value| {
+                        if (state_value == .string) {
+                            const state = try std.fmt.parseInt(u64, state_value.string, 10);
+                            self.game_state = @intCast(state);
+                            try self.sendGameState();
+                            if (engine.getCurrentPlayer(self.game_state) == .B) {
+                                try self.handleAITurn();
+                            }
+                        } else {
+                            return error.InvalidStateFormat;
+                        }
+                    } else {
+                        return error.MissingStateField;
                     }
                 } else if (std.mem.eql(u8, msg_type.string, "roll_dice")) {
                     if (engine.getCurrentPlayer(self.game_state) == .A) {
