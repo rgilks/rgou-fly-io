@@ -41,10 +41,10 @@ export const getPiecePositions = (state) => {
 };
 
 export const positionPieces = (state, scene) => {
-  const offBoardA = state & 0b111;
-  const offBoardB = (state >> 3) & 0b111;
-  const completedA = (state >> 6) & 0b111;
-  const completedB = (state >> 9) & 0b111;
+  const offBoardA = Number(state & 0b111n);
+  const offBoardB = Number((state >> 3n) & 0b111n);
+  const completedA = Number((state >> 6n) & 0b111n);
+  const completedB = Number((state >> 9n) & 0b111n);
 
   console.log(`Off-board A: ${offBoardA}, B: ${offBoardB}`);
   console.log(`Completed A: ${completedA}, B: ${completedB}`);

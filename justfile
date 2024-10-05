@@ -26,7 +26,7 @@ concat:
     ./scripts/concat_files.sh . justfile Dockerfile .conf .toml .zig .zon .md .dot .html .mjs .js -- zig-out/
 
 concat-js:
-    ./scripts/concat_files.sh . justfile Dockwefile .html .mjs .js -- zig-out/
+    ./scripts/concat_files.sh . justfile Dockerfile .html .mjs .js -- zig-out/
 
 
 # Run live server

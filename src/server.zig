@@ -161,9 +161,12 @@ const Handler = struct {
         var game_state_json = std.ArrayList(u8).init(self.context.allocator);
         defer game_state_json.deinit();
 
+        const state_string = try std.fmt.allocPrint(self.context.allocator, "{d}", .{self.game_state});
+        defer self.context.allocator.free(state_string);
+
         try std.json.stringify(.{
             .type = "game_state",
-            .state = self.game_state,
+            .state = state_string,
             .current_player = @tagName(engine.getCurrentPlayer(self.game_state)),
             .dice_roll = engine.getDiceRoll(self.game_state),
             .moves = moves.items,

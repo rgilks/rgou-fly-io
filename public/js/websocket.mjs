@@ -15,13 +15,21 @@ export const setupWebSocket = (updateGameState) => {
     socket.addEventListener("message", (event) => {
       console.log("Received:", event.data);
       if (event?.data.startsWith("{")) {
-        const message = JSON.parse(event.data);
-        if (message.type === "game_state") {
-          updateGameState(message);
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === "game_state") {
+            // Convert the state to BigInt before updating the game state
+            if (message.state) {
+              message.state = BigInt(message.state);
+            }
+            updateGameState(message);
+          }
+        } catch (error) {
+          console.error("Error parsing message:", error);
         }
       }
     });
-
+    
     socket.addEventListener("close", (event) => {
       console.log("WebSocket connection closed:", event);
     });
