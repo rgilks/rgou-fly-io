@@ -3,27 +3,49 @@ import { getPositionFromIndex } from "./utils.mjs";
 const PIECES_PER_PLAYER = 7;
 const BOARD_SIZE = 24;
 
+const createLODPiece = (scene, name, highPolyMesh, lowPolyMesh) => {
+  if (BABYLON.MeshLODLevel && BABYLON.MeshLODLevel.AddLODLevel) {
+    const lodMesh = BABYLON.Mesh.CreateBox(name, 1, scene);
+    lodMesh.isVisible = false;
+
+    const lodDistance = 5; // Adjust this value based on your scene scale
+
+    BABYLON.MeshLODLevel.AddLODLevel(lodDistance, lowPolyMesh);
+    BABYLON.MeshLODLevel.AddLODLevel(0, highPolyMesh);
+    
+    return lodMesh;
+  } else {
+    // Fallback to using just the high poly mesh if LOD is not available
+    console.log("LOD not available, using high poly mesh only");
+    return highPolyMesh;
+  }
+};
+
 export const createPieces = (scene) => {
   const pieces = {};
+  const piecePositions = [];
+
+  // Create high and low poly meshes for LOD
+  const highPolyPiece = BABYLON.MeshBuilder.CreateCylinder("highPolyPiece", { height: 0.7, diameter: 0.8, tessellation: 32 }, scene);
+  const lowPolyPiece = BABYLON.MeshBuilder.CreateCylinder("lowPolyPiece", { height: 0.7, diameter: 0.8, tessellation: 8 }, scene);
+  
+  highPolyPiece.isVisible = false;
+  lowPolyPiece.isVisible = false;
+
   for (let player of ["A", "B"]) {
+    const material = new BABYLON.StandardMaterial(`pieceMat_${player}`, scene);
+    material.diffuseColor = player === "A" ? new BABYLON.Color3(0.7, 0, 0) : new BABYLON.Color3(0, 0, 0.7);
+    
+    const piece = createLODPiece(scene, `piece_${player}`, highPolyPiece, lowPolyPiece);
+    piece.material = material;
+
     for (let i = 0; i < PIECES_PER_PLAYER; i++) {
-      const piece = BABYLON.MeshBuilder.CreateCylinder(
-        `piece_${player}_${i}`,
-        { height: 0.7, diameter: 0.8 },
-        scene
-      );
-      piece.material = new BABYLON.StandardMaterial(
-        `pieceMat_${player}`,
-        scene
-      );
-      piece.material.diffuseColor =
-        player === "A"
-          ? new BABYLON.Color3(0.7, 0, 0) // Red for player A
-          : new BABYLON.Color3(0, 0, 0.7); // Blue for player B
-      piece.isPickable = true;
-      pieces[`${player}_${i}`] = piece;
+      const instance = piece.createInstance(`piece_${player}_${i}`);
+      instance.position = new BABYLON.Vector3(-5 + (player === "B" ? 10 : 0), 0.25, i * 0.9 - 2.5);
+      pieces[`${player}_${i}`] = instance;
     }
   }
+
   return pieces;
 };
 

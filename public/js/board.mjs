@@ -1,6 +1,11 @@
 export const createScene = async (engine, canvas) => {
   const scene = new BABYLON.Scene(engine);
   
+  // Optimize for WebXR
+  scene.useRightHandedSystem = true;
+  scene.autoClear = false;
+  scene.autoClearDepthAndStencil = false;
+
   // Create a camera, but don't attach control yet
   const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 8, 10, new BABYLON.Vector3(0, 0, 0), scene);
   
@@ -8,34 +13,49 @@ export const createScene = async (engine, canvas) => {
 
   createBoard(scene);
 
-  const xr = await scene.createDefaultXRExperienceAsync({
-    floorMeshes: [scene.getMeshByName("boardBase")],  // Assuming you have a base mesh for the board
-  });
-
-  if (xr.baseExperience) {
-    // VR is supported
-    xr.baseExperience.camera.position.y = 1.6;  // Set initial camera height
-    
-    // Create a button for entering VR
-    const vrButton = document.createElement("button");
-    vrButton.textContent = "Enter VR";
-    vrButton.style.position = "absolute";
-    vrButton.style.bottom = "10px";
-    vrButton.style.left = "50%";
-    vrButton.style.transform = "translateX(-50%)";
-    vrButton.style.padding = "10px";
-    vrButton.style.fontSize = "16px";
-    document.body.appendChild(vrButton);
-
-    vrButton.addEventListener("click", () => {
-      xr.baseExperience.enterXRAsync("immersive-vr", "local-floor");
+  let xrExperience;
+  try {
+    const xrHelper = await scene.createDefaultXRExperienceAsync({
+      floorMeshes: [scene.getMeshByName("boardBase")],
     });
-  } else {
-    // VR not supported, use default camera controls
+
+    if (xrHelper.baseExperience) {
+      xrExperience = xrHelper;
+      // VR is supported
+      xrHelper.baseExperience.camera.position.y = 1.6;  // Set initial camera height
+      
+      // Use multiview if available for better performance
+      if (engine.getCaps().multiview) {
+        scene.useMultiviewToRenderMainScene = true;
+      }
+
+      // Create a button for entering VR
+      const vrButton = document.createElement("button");
+      vrButton.textContent = "Enter VR";
+      vrButton.style.position = "absolute";
+      vrButton.style.bottom = "10px";
+      vrButton.style.left = "50%";
+      vrButton.style.transform = "translateX(-50%)";
+      vrButton.style.padding = "10px";
+      vrButton.style.fontSize = "16px";
+      document.body.appendChild(vrButton);
+
+      vrButton.addEventListener("click", () => {
+        xrHelper.baseExperience.enterXRAsync("immersive-vr", "local-floor");
+      });
+    } else {
+      console.log("WebXR not available");
+    }
+  } catch (error) {
+    console.log("WebXR initialization failed", error);
+  }
+
+  // If VR is not supported or initialization failed, use default camera controls
+  if (!xrExperience) {
     camera.attachControl(canvas, true);
   }
 
-  return scene;
+  return { scene, xrExperience };
 };
 
 export const createBoard = (scene) => {
@@ -52,35 +72,17 @@ export const createBoard = (scene) => {
 
 export const createSquares = (scene) => {
   const squarePositions = [
-    [0, 0],
-    [1, 0],
-    [2, 0],
-    [3, 0],
-    [6, 0],
-    [7, 0],
-    [0, 1],
-    [1, 1],
-    [2, 1],
-    [3, 1],
-    [4, 1],
-    [5, 1],
-    [6, 1],
-    [7, 1],
-    [0, 2],
-    [1, 2],
-    [2, 2],
-    [3, 2],
-    [6, 2],
-    [7, 2],
+    [0, 0], [1, 0], [2, 0], [3, 0], [6, 0], [7, 0],
+    [0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1],
+    [0, 2], [1, 2], [2, 2], [3, 2], [6, 2], [7, 2],
   ];
 
   const rosettePositions = [
-    [0, 0],
-    [7, 0],
-    [3, 1],
-    [0, 2],
-    [7, 2],
+    [0, 0], [7, 0], [3, 1], [0, 2], [7, 2],
   ];
+
+  // Create a single merged mesh for all squares
+  const squareMeshes = [];
 
   squarePositions.forEach(([x, z], index) => {
     const square = BABYLON.MeshBuilder.CreateBox(
@@ -88,16 +90,20 @@ export const createSquares = (scene) => {
       { width: 0.98, height: 0.5, depth: 0.98 },
       scene
     );
-    square.index = index;
     square.position.set(x - 3.5, 0.2, z - 1);
 
-    const squareMaterial = new BABYLON.StandardMaterial(
-      `squareMat_${index}`,
-      scene
-    );
     if (rosettePositions.some((pos) => pos[0] === x && pos[1] === z)) {
-      squareMaterial.diffuseColor = new BABYLON.Color3(0.8, 0.1, 0.1); // Red color for rosettes
+      square.material = new BABYLON.StandardMaterial(`rosetteMat_${index}`, scene);
+      square.material.diffuseColor = new BABYLON.Color3(0.8, 0.1, 0.1); // Red color for rosettes
+    } else {
+      square.material = new BABYLON.StandardMaterial(`squareMat_${index}`, scene);
+      square.material.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.9); // Light color for regular squares
     }
-    square.material = squareMaterial;
+
+    squareMeshes.push(square);
   });
+
+  // Merge all square meshes into a single mesh
+  const mergedSquares = BABYLON.Mesh.MergeMeshes(squareMeshes, true, true, undefined, false, true);
+  mergedSquares.name = "boardSquares";
 };

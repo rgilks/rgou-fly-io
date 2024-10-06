@@ -9,6 +9,19 @@ import {
 } from "./pieces.mjs";
 import { printStateBinary } from "./utils.mjs";
 
+const addFramerateMonitor = (scene, engine) => {
+  const fpsDisplay = document.createElement("div");
+  fpsDisplay.style.position = "absolute";
+  fpsDisplay.style.top = "10px";
+  fpsDisplay.style.left = "10px";
+  fpsDisplay.style.color = "white";
+  document.body.appendChild(fpsDisplay);
+
+  scene.onAfterRenderObservable.add(() => {
+    fpsDisplay.textContent = `FPS: ${engine.getFps().toFixed()}`;
+  });
+};
+
 export const createGame = (deps) => {
   const {
     canvas,
@@ -129,10 +142,13 @@ export const createGame = (deps) => {
   };
 
   const initialize = async () => {
-    scene = await createScene(engine, canvas);
-    xr = scene.xrExperience;
+    const { scene: newScene, xrExperience } = await createScene(engine, canvas);
+    scene = newScene;
+    xr = xrExperience;
     createPieces(scene);
     loadCameraPosition();
+
+    addFramerateMonitor(scene, engine);
 
     scene.onPointerDown = (evt, pickResult) => {
       if (
