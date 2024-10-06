@@ -9,21 +9,42 @@ export const initGame = async (socket) => {
   }
 };
 
-export const handlePieceClick = (pickResult, gameState, scene, makeMove) => {
+export const handlePieceClick = (pickResult, gameState, scene, makeMove, xr) => {
   if (!scene) {
     console.error("Scene is undefined in handlePieceClick");
     return;
   }
 
-  if (
-    pickResult.hit &&
-    (pickResult.pickedMesh.name === "moveHighlight" ||
-      pickResult.pickedMesh.name.startsWith("exitSquare"))
-  ) {
-    const move = pickResult.pickedMesh.move;
-    if (move) {
-      makeMove(move.from, move.to);
-      clearHighlights(scene);
+  if (xr && xr.baseExperience) {
+    // VR mode
+    xr.input.onControllerAddedObservable.add((controller) => {
+      controller.onMotionControllerInitObservable.add((motionController) => {
+        motionController.onModelLoadedObservable.add(() => {
+          const component = motionController.getComponent("trigger");
+          component.onButtonStateChangedObservable.add((component) => {
+            if (component.pressed) {
+              const ray = controller.getWorldPointerRayToRef();
+              const pick = scene.pickWithRay(ray);
+              if (pick.hit && (pick.pickedMesh.name === "moveHighlight" || pick.pickedMesh.name.startsWith("exitSquare"))) {
+                const move = pick.pickedMesh.move;
+                if (move) {
+                  makeMove(move.from, move.to);
+                  clearHighlights(scene);
+                }
+              }
+            }
+          });
+        });
+      });
+    });
+  } else {
+    // Non-VR mode
+    if (pickResult.hit && (pickResult.pickedMesh.name === "moveHighlight" || pickResult.pickedMesh.name.startsWith("exitSquare"))) {
+      const move = pickResult.pickedMesh.move;
+      if (move) {
+        makeMove(move.from, move.to);
+        clearHighlights(scene);
+      }
     }
   }
 };

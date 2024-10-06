@@ -1,26 +1,52 @@
-export const createScene = (engine, canvas) => {
+export const createScene = async (engine, canvas) => {
   const scene = new BABYLON.Scene(engine);
-  const camera = new BABYLON.ArcRotateCamera(
-    "camera",
-    -Math.PI / 2,
-    Math.PI / 8,
-    10,
-    new BABYLON.Vector3(0, 0, 0),
-    scene
-  );
-  camera.attachControl(canvas, true);
-  const light = new BABYLON.HemisphericLight(
-    "light",
-    new BABYLON.Vector3(0, 0.1, 0),
-    scene
-  );
+  
+  // Create a camera, but don't attach control yet
+  const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 8, 10, new BABYLON.Vector3(0, 0, 0), scene);
+  
+  const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
   createBoard(scene);
+
+  const xr = await scene.createDefaultXRExperienceAsync({
+    floorMeshes: [scene.getMeshByName("boardBase")],  // Assuming you have a base mesh for the board
+  });
+
+  if (xr.baseExperience) {
+    // VR is supported
+    xr.baseExperience.camera.position.y = 1.6;  // Set initial camera height
+    
+    // Create a button for entering VR
+    const vrButton = document.createElement("button");
+    vrButton.textContent = "Enter VR";
+    vrButton.style.position = "absolute";
+    vrButton.style.bottom = "10px";
+    vrButton.style.left = "50%";
+    vrButton.style.transform = "translateX(-50%)";
+    vrButton.style.padding = "10px";
+    vrButton.style.fontSize = "16px";
+    document.body.appendChild(vrButton);
+
+    vrButton.addEventListener("click", () => {
+      xr.baseExperience.enterXRAsync("immersive-vr", "local-floor");
+    });
+  } else {
+    // VR not supported, use default camera controls
+    camera.attachControl(canvas, true);
+  }
 
   return scene;
 };
 
 export const createBoard = (scene) => {
+  // Create a base for the board
+  const boardBase = BABYLON.MeshBuilder.CreateBox("boardBase", {width: 8, height: 0.1, depth: 3}, scene);
+  boardBase.position.y = -0.05;  // Slightly below the squares
+  
+  const baseMaterial = new BABYLON.StandardMaterial("baseMaterial", scene);
+  baseMaterial.diffuseColor = new BABYLON.Color3(0.4, 0.3, 0.2);  // Brown color
+  boardBase.material = baseMaterial;
+
   createSquares(scene);
 };
 

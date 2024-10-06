@@ -1,8 +1,8 @@
 export const setupWebSocket = (updateGameState) => {
   return new Promise((resolve, reject) => {
-    const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+    const wsProtocol = location.hostname === "localhost" ? "ws:" : "wss:";
     const wsUrl = `${wsProtocol}//${
-      location.hostname === "127.0.0.1" ? "127.0.0.1:9223" : location.host
+      location.hostname === "localhost" ? "127.0.0.1:9223" : location.host
     }/ws`;
 
     const socket = new WebSocket(wsUrl);
@@ -29,7 +29,7 @@ export const setupWebSocket = (updateGameState) => {
         }
       }
     });
-    
+
     socket.addEventListener("close", (event) => {
       console.log("WebSocket connection closed:", event);
     });

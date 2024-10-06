@@ -31,7 +31,7 @@ concat-js:
 
 # Run live server
 s:
-    live-server public
+    serve public
 
 # =================
 # Docker Build

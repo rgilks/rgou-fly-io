@@ -22,6 +22,7 @@ export const createGame = (deps) => {
   let scene;
   let gameState = null;
   let socket;
+  let xr;
 
   const updateGameState = (newState) => {
     gameState = newState;
@@ -128,7 +129,8 @@ export const createGame = (deps) => {
   };
 
   const initialize = async () => {
-    scene = createScene(engine, canvas);
+    scene = await createScene(engine, canvas);
+    xr = scene.xrExperience;
     createPieces(scene);
     loadCameraPosition();
 
@@ -138,7 +140,7 @@ export const createGame = (deps) => {
         gameState.current_player === "A" &&
         gameState.dice_roll > 0
       ) {
-        handlePieceClick(pickResult, gameState, scene, makeMove);
+        handlePieceClick(pickResult, gameState, scene, makeMove, xr);
       }
     };
 
